@@ -1,16 +1,17 @@
-"use client";
+import HeroSection from "@/components/HeroSection";
+import FeaturesSection from "@/components/FeaturesSection";
+import HowItWorks from "@/components/HowItWorks";
+import Footer from "@/components/Footer";
+import Navbar from "@/components/Navbar";
 
-import { useRoadmapStore } from "@/store/useRoadmapStore";
-import JobInput from "@/components/JobInput";
-import RoadmapView from "@/components/RoadmapView";
-
-export default function Home() {
-  const { currentStep } = useRoadmapStore();
-
+export default function LandingPage() {
   return (
-    <>
-      {currentStep === "input" && <JobInput />}
-      {currentStep === "roadmap" && <RoadmapView />}
-    </>
+    <main className="min-h-screen">
+      <Navbar />
+      <HeroSection />
+      <FeaturesSection />
+      <HowItWorks />
+      <Footer />
+    </main>
   );
 }
