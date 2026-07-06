@@ -2,19 +2,36 @@ import { NextResponse } from "next/server";
 import {
   findMatchingRoadmap,
   extractSkillsFromTemplate,
-  ROADMAP_TEMPLATES,
 } from "@/lib/roadmaps/templates";
 import { extractSkillsFromJob, generateLearningRoadmap } from "@/lib/gemini";
 import { validateJobInput } from "@/lib/validator";
+import { canGenerate, incrementUsage } from "@/lib/usageTracker";
 
-// Mode can be 'auto', 'local-only', 'ai-only'
 export async function POST(request: Request) {
   try {
-    const { jobDescription, mode = "auto" } = await request.json();
+    const { jobDescription, mode = "auto", userId } = await request.json();
 
-    // Step 1: Validate input first
+    // Check if user is authenticated
+    const isAuthenticated = userId && userId !== "anonymous";
+
+    // Check usage limits (skip for local-only mode)
+    if (mode !== "local-only") {
+      const usageCheck = canGenerate(isAuthenticated);
+      if (!usageCheck.canGenerate) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: usageCheck.message,
+            usageLimitReached: true,
+            remainingToday: usageCheck.remainingToday,
+          },
+          { status: 429 }
+        );
+      }
+    }
+
+    // Validate input
     const validation = validateJobInput(jobDescription);
-
     if (!validation.isValid) {
       return NextResponse.json(
         {
@@ -26,15 +43,16 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log(`🔍 Processing (Mode: ${mode})...`);
-    console.log(`📊 Detected: ${validation.detectedCategory}`);
-    console.log(`🎯 Skills found: ${validation.requiredSkills.join(", ")}`);
+    console.log(
+      `🔍 Processing (Mode: ${mode}, User: ${userId || "anonymous"})...`
+    );
 
-    // Step 2: Try local first (for auto or local-only mode)
+    // Try local first
     if (mode === "auto" || mode === "local-only") {
       const localTemplate = findMatchingRoadmap(jobDescription);
 
       if (localTemplate) {
+        // Local templates don't count towards usage
         console.log("📚 Using local template:", localTemplate.title);
 
         return NextResponse.json({
@@ -50,28 +68,9 @@ export async function POST(request: Request) {
           },
         });
       }
-
-      if (mode === "local-only") {
-        // No local match and we're in local-only mode
-        const availableStacks = ROADMAP_TEMPLATES.map((t) => t.title).join(
-          ", "
-        );
-        return NextResponse.json(
-          {
-            success: false,
-            error: `No matching local roadmap found. Available stacks: ${availableStacks}. Try different keywords or switch to AI mode.`,
-            availableTemplates: ROADMAP_TEMPLATES.map((t) => ({
-              id: t.id,
-              title: t.title,
-              keywords: t.keywords.slice(0, 5),
-            })),
-          },
-          { status: 404 }
-        );
-      }
     }
 
-    // Step 3: Use AI (for auto or ai-only mode)
+    // Use AI (counts towards usage)
     if (mode === "auto" || mode === "ai-only") {
       console.log("🤖 Using AI generation...");
 
@@ -95,8 +94,6 @@ export async function POST(request: Request) {
       {
         success: false,
         error: error.message || "Failed to generate roadmap",
-        isApiError:
-          error.message?.includes("API") || error.message?.includes("token"),
       },
       { status: 500 }
     );
