@@ -112,7 +112,6 @@ export default function JobInput() {
           jobDescription,
           mode,
           userId: user?.uid || "anonymous",
-          
         }),
       });
 
@@ -191,9 +190,6 @@ export default function JobInput() {
 
         {/* Quick Stacks */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            ⚡ Quick Select (Instant - No API):
-          </label>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {QUICK_STACKS.map((stack, i) => (
               <button

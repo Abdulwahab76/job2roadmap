@@ -19,7 +19,7 @@ type UserSubscription = {
 
 const STORAGE_KEY = "job2roadmap_usage";
 const ANONYMOUS_LIMIT = 1;
-const FREE_USER_LIMIT = 10;
+const FREE_USER_LIMIT = 20;
 const PRO_USER_LIMIT = Infinity;
 
 // Get today's date as string

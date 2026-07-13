@@ -1,322 +1,544 @@
- export type RoadmapTemplate = {
-  id: string
-  title: string
-  keywords: string[]
-  difficulty: string
-  estimatedDays: number
-  phases: {
-    phaseTitle: string
-    duration: string
-    topics: {
-      title: string
-      description: string
-      resources: {
-        name: string
-        url: string
-        type: string
-        isFree: boolean
-      }[]
-      project: string
-    }[]
-  }[]
-}
+// 🎯 Expanded keyword matching - More local templates = Less API calls
+
+export type RoadmapTemplate = {
+  id: string;
+  title: string;
+  keywords: string[];
+  difficulty: string;
+  estimatedDays: number;
+  phases: any[];
+};
 
 export const ROADMAP_TEMPLATES: RoadmapTemplate[] = [
   {
-    id: 'mern-stack',
-    title: 'MERN Stack Developer Roadmap',
-    keywords: ['mern', 'mongodb', 'express', 'react', 'node', 'full stack', 'mongo'],
-    difficulty: 'intermediate',
+    id: "mern-stack",
+    title: "MERN Stack Developer Roadmap",
+    keywords: [
+      "mern",
+      "mongodb",
+      "express",
+      "react",
+      "node",
+      "full stack",
+      "mongo",
+      "mongoose",
+      "express.js",
+      "node.js",
+      "react.js",
+    ],
+    difficulty: "intermediate",
     estimatedDays: 90,
     phases: [
-      {
-        phaseTitle: 'Phase 1: Web Fundamentals (2 weeks)',
-        duration: '2 weeks',
-        topics: [
-          {
-            title: 'HTML5 & CSS3 Mastery',
-            description: 'Learn semantic HTML, CSS Grid, Flexbox, and responsive design',
-            resources: [
-              { name: 'freeCodeCamp Responsive Web Design', url: 'https://www.freecodecamp.org/learn/2022/responsive-web-design/', type: 'course', isFree: true },
-              { name: 'CSS Grid Garden', url: 'https://cssgridgarden.com/', type: 'interactive', isFree: true },
-              { name: 'Kevin Powell CSS YouTube', url: 'https://www.youtube.com/@KevinPowell', type: 'video', isFree: true }
-            ],
-            project: 'Build a responsive portfolio website'
-          },
-          {
-            title: 'JavaScript Fundamentals',
-            description: 'Master ES6+, async/await, DOM manipulation, and modern JS',
-            resources: [
-              { name: 'JavaScript.info', url: 'https://javascript.info/', type: 'documentation', isFree: true },
-              { name: 'Traversy Media JS Crash Course', url: 'https://youtu.be/hdI2bqOjy3c', type: 'video', isFree: true }
-            ],
-            project: 'Build an interactive todo app with local storage'
-          }
-        ]
-      },
-      {
-        phaseTitle: 'Phase 2: Frontend with React (3 weeks)',
-        duration: '3 weeks',
-        topics: [
-          {
-            title: 'React Fundamentals',
-            description: 'Components, props, state, hooks, and React Router',
-            resources: [
-              { name: 'React Official Tutorial', url: 'https://react.dev/learn', type: 'documentation', isFree: true },
-              { name: 'Net Ninja React Playlist', url: 'https://youtube.com/playlist?list=PL4cUxeGkcC9gZD-Tvwfod2gaISzfRiP9d', type: 'video', isFree: true }
-            ],
-            project: 'Build a movie search app using TMDB API'
-          },
-          {
-            title: 'State Management & Advanced React',
-            description: 'Context API, Redux Toolkit, custom hooks, and performance optimization',
-            resources: [
-              { name: 'Redux Toolkit Docs', url: 'https://redux-toolkit.js.org/tutorials/quick-start', type: 'documentation', isFree: true },
-              { name: 'Codevolution React Playlist', url: 'https://youtube.com/playlist?list=PLC3y8-rFHvwgg3vaYJgHGnModB54rxOk3', type: 'video', isFree: true }
-            ],
-            project: 'Build an e-commerce frontend with cart functionality'
-          }
-        ]
-      },
-      {
-        phaseTitle: 'Phase 3: Backend with Node & Express (3 weeks)',
-        duration: '3 weeks',
-        topics: [
-          {
-            title: 'Node.js & Express Basics',
-            description: 'RESTful APIs, middleware, authentication with JWT',
-            resources: [
-              { name: 'Node.js Official Docs', url: 'https://nodejs.org/en/docs/', type: 'documentation', isFree: true },
-              { name: 'Express.js Guide', url: 'https://expressjs.com/en/guide/routing.html', type: 'documentation', isFree: true }
-            ],
-            project: 'Build a RESTful API for a blog platform'
-          },
-          {
-            title: 'MongoDB & Mongoose',
-            description: 'NoSQL database design, CRUD operations, aggregation',
-            resources: [
-              { name: 'MongoDB University', url: 'https://learn.mongodb.com/', type: 'course', isFree: true },
-              { name: 'Mongoose Docs', url: 'https://mongoosejs.com/docs/guide.html', type: 'documentation', isFree: true }
-            ],
-            project: 'Add database to your blog API with user authentication'
-          }
-        ]
-      },
-      {
-        phaseTitle: 'Phase 4: Full Stack Integration (4 weeks)',
-        duration: '4 weeks',
-        topics: [
-          {
-            title: 'Connecting Frontend to Backend',
-            description: 'API integration, Axios, error handling, loading states',
-            resources: [
-              { name: 'Axios Docs', url: 'https://axios-http.com/docs/intro', type: 'documentation', isFree: true },
-              { name: 'React Query Tutorial', url: 'https://tanstack.com/query/latest/docs/react/overview', type: 'documentation', isFree: true }
-            ],
-            project: 'Full stack social media app with posts, likes, comments'
-          },
-          {
-            title: 'Deployment & DevOps Basics',
-            description: 'Deploy to Vercel/Render, environment variables, Git workflow',
-            resources: [
-              { name: 'Vercel Deployment Guide', url: 'https://vercel.com/guides', type: 'documentation', isFree: true },
-              { name: 'Render Deployment', url: 'https://render.com/docs', type: 'documentation', isFree: true }
-            ],
-            project: 'Deploy your full stack app with CI/CD'
-          }
-        ]
-      }
-    ]
+      /* your phases */
+    ],
   },
-  
   {
-    id: 'react-frontend',
-    title: 'React Frontend Developer Roadmap',
-    keywords: ['react', 'frontend', 'ui', 'redux', 'next', 'typescript'],
-    difficulty: 'beginner',
+    id: "react-frontend",
+    title: "React Frontend Developer Roadmap",
+    keywords: [
+      "react",
+      "frontend",
+      "ui",
+      "redux",
+      "next",
+      "typescript",
+      "react.js",
+      "next.js",
+      "tailwind",
+      "css",
+      "html",
+      "javascript",
+      "js",
+    ],
+    difficulty: "beginner",
     estimatedDays: 60,
     phases: [
-      {
-        phaseTitle: 'Phase 1: JavaScript & Web Basics (2 weeks)',
-        duration: '2 weeks',
-        topics: [
-          {
-            title: 'Modern JavaScript',
-            description: 'ES6+, promises, async/await, array methods',
-            resources: [
-              { name: 'JavaScript30', url: 'https://javascript30.com/', type: 'course', isFree: true },
-              { name: 'MDN JavaScript Guide', url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide', type: 'documentation', isFree: true }
-            ],
-            project: 'Build 30 vanilla JavaScript projects'
-          },
-          {
-            title: 'TypeScript Basics',
-            description: 'Types, interfaces, generics, and TypeScript with React',
-            resources: [
-              { name: 'TypeScript Handbook', url: 'https://www.typescriptlang.org/docs/handbook/intro.html', type: 'documentation', isFree: true },
-              { name: 'TypeScript React Guide', url: 'https://react-typescript-cheatsheet.netlify.app/', type: 'documentation', isFree: true }
-            ],
-            project: 'Convert a JS project to TypeScript'
-          }
-        ]
-      },
-      {
-        phaseTitle: 'Phase 2: React Core (3 weeks)',
-        duration: '3 weeks',
-        topics: [
-          {
-            title: 'React & Next.js',
-            description: 'Components, routing, SSR, API routes',
-            resources: [
-              { name: 'Next.js Tutorial', url: 'https://nextjs.org/learn', type: 'course', isFree: true },
-              { name: 'React Beta Docs', url: 'https://react.dev/', type: 'documentation', isFree: true }
-            ],
-            project: 'Build a blog with Next.js and Markdown'
-          },
-          {
-            title: 'Styling & UI Libraries',
-            description: 'TailwindCSS, CSS Modules, component libraries',
-            resources: [
-              { name: 'TailwindCSS Docs', url: 'https://tailwindcss.com/docs', type: 'documentation', isFree: true },
-              { name: 'Tailwind Labs YouTube', url: 'https://www.youtube.com/@TailwindLabs', type: 'video', isFree: true }
-            ],
-            project: 'Clone a popular website UI with TailwindCSS'
-          }
-        ]
-      }
-    ]
+      /* your phases */
+    ],
   },
-  
   {
-    id: 'python-backend',
-    title: 'Python Backend Developer Roadmap',
-    keywords: ['python', 'django', 'flask', 'backend', 'api', 'fastapi', 'sql'],
-    difficulty: 'beginner',
+    id: "python-backend",
+    title: "Python Backend Developer Roadmap",
+    keywords: [
+      "python",
+      "django",
+      "flask",
+      "fastapi",
+      "backend",
+      "api",
+      "sql",
+      "postgresql",
+      "mysql",
+      "orm",
+    ],
+    difficulty: "intermediate",
+    estimatedDays: 75,
+    phases: [
+      /* your phases */
+    ],
+  },
+  {
+    id: "devops",
+    title: "DevOps Engineer Roadmap",
+    keywords: [
+      "devops",
+      "docker",
+      "kubernetes",
+      "aws",
+      "azure",
+      "gcp",
+      "ci/cd",
+      "jenkins",
+      "terraform",
+      "cloud",
+      "linux",
+    ],
+    difficulty: "advanced",
+    estimatedDays: 120,
+    phases: [
+      /* your phases */
+    ],
+  },
+  {
+    id: "data-science",
+    title: "Data Science Roadmap",
+    keywords: [
+      "data science",
+      "machine learning",
+      "ml",
+      "ai",
+      "python",
+      "pandas",
+      "numpy",
+      "tensorflow",
+      "pytorch",
+      "deep learning",
+    ],
+    difficulty: "advanced",
+    estimatedDays: 100,
+    phases: [
+      /* your phases */
+    ],
+  },
+  {
+    id: "mobile-dev",
+    title: "Mobile Developer Roadmap",
+    keywords: [
+      "react native",
+      "flutter",
+      "ios",
+      "android",
+      "swift",
+      "kotlin",
+      "mobile",
+      "app",
+    ],
+    difficulty: "intermediate",
+    estimatedDays: 80,
+    phases: [
+      /* your phases */
+    ],
+  },
+  {
+    id: "vue-frontend",
+    title: "Vue.js Developer Roadmap",
+    keywords: ["vue", "vue.js", "vuex", "nuxt", "nuxt.js", "pinia", "frontend"],
+    difficulty: "beginner",
+    estimatedDays: 55,
+    phases: [
+      /* your phases */
+    ],
+  },
+  {
+    id: "angular-frontend",
+    title: "Angular Developer Roadmap",
+    keywords: [
+      "angular",
+      "angular.js",
+      "rxjs",
+      "ngrx",
+      "typescript",
+      "frontend",
+    ],
+    difficulty: "intermediate",
+    estimatedDays: 70,
+    phases: [
+      /* your phases */
+    ],
+  },
+  {
+    id: "go-backend",
+    title: "Go Backend Developer Roadmap",
+    keywords: [
+      "go",
+      "golang",
+      "gin",
+      "echo",
+      "fiber",
+      "backend",
+      "api",
+      "microservices",
+    ],
+    difficulty: "intermediate",
+    estimatedDays: 65,
+    phases: [
+      /* your phases */
+    ],
+  },
+  {
+    id: "java-backend",
+    title: "Java Backend Developer Roadmap",
+    keywords: [
+      "java",
+      "spring",
+      "spring boot",
+      "hibernate",
+      "jpa",
+      "backend",
+      "microservices",
+      "maven",
+      "gradle",
+    ],
+    difficulty: "intermediate",
+    estimatedDays: 80,
+    phases: [
+      /* your phases */
+    ],
+  },
+  {
+    id: "wordpress-dev",
+    title: "WordPress Developer Roadmap",
+    keywords: [
+      "wordpress",
+      "word press",
+      "wp",
+      "woocommerce",
+      "elementor",
+      "wpbakery",
+      "divi",
+      "php",
+      "mysql",
+      "html",
+      "css",
+      "javascript",
+      "bootstrap",
+      "cpanel",
+      "web developer",
+      "website",
+      "landing page",
+      "seo",
+      "figma",
+      "adobe xd",
+      "psd",
+      "theme",
+      "plugin",
+      "hosting",
+    ],
+    difficulty: "intermediate",
     estimatedDays: 75,
     phases: [
       {
-        phaseTitle: 'Phase 1: Python Fundamentals (2 weeks)',
-        duration: '2 weeks',
+        phaseTitle: "Phase 1: Web Fundamentals (2 weeks)",
+        duration: "2 weeks",
         topics: [
           {
-            title: 'Python Basics',
-            description: 'Syntax, data structures, OOP, file handling',
+            title: "HTML5 & CSS3 Mastery",
+            description:
+              "Learn semantic HTML, CSS3, Flexbox, Grid, and responsive design principles",
             resources: [
-              { name: 'Python.org Tutorial', url: 'https://docs.python.org/3/tutorial/', type: 'documentation', isFree: true },
-              { name: 'Corey Schafer Python', url: 'https://youtube.com/playlist?list=PL-osiE80TeTt2d9bfVyTiXJA-UTHn6WwU', type: 'video', isFree: true }
+              {
+                name: "freeCodeCamp Responsive Web Design",
+                url: "https://www.freecodecamp.org/learn/2022/responsive-web-design/",
+                type: "course",
+                isFree: true,
+              },
+              {
+                name: "CSS-Tricks Complete Guide",
+                url: "https://css-tricks.com/guides/",
+                type: "documentation",
+                isFree: true,
+              },
+              {
+                name: "Kevin Powell CSS YouTube",
+                url: "https://www.youtube.com/@KevinPowell",
+                type: "video",
+                isFree: true,
+              },
             ],
-            project: 'Build a CLI task manager app'
-          }
-        ]
+            project: "Build a responsive portfolio website from scratch",
+          },
+          {
+            title: "JavaScript & Bootstrap",
+            description:
+              "Master JavaScript ES6+, DOM manipulation, and Bootstrap framework",
+            resources: [
+              {
+                name: "JavaScript.info",
+                url: "https://javascript.info/",
+                type: "documentation",
+                isFree: true,
+              },
+              {
+                name: "Bootstrap 5 Documentation",
+                url: "https://getbootstrap.com/docs/5.3/getting-started/introduction/",
+                type: "documentation",
+                isFree: true,
+              },
+            ],
+            project: "Build a responsive landing page with Bootstrap",
+          },
+          {
+            title: "PHP & MySQL Basics",
+            description:
+              "Learn server-side programming with PHP and database management",
+            resources: [
+              {
+                name: "PHP Manual",
+                url: "https://www.php.net/manual/en/",
+                type: "documentation",
+                isFree: true,
+              },
+              {
+                name: "MySQL Tutorial",
+                url: "https://www.mysqltutorial.org/",
+                type: "tutorial",
+                isFree: true,
+              },
+            ],
+            project: "Create a simple CMS with PHP & MySQL",
+          },
+        ],
       },
       {
-        phaseTitle: 'Phase 2: Web Framework (4 weeks)',
-        duration: '4 weeks',
+        phaseTitle: "Phase 2: WordPress Core (3 weeks)",
+        duration: "3 weeks",
         topics: [
           {
-            title: 'Django or FastAPI',
-            description: 'Models, views, templates, REST APIs',
+            title: "WordPress Installation & Setup",
+            description:
+              "Learn WordPress installation, configuration, dashboard, themes, and plugins",
             resources: [
-              { name: 'Django Girls Tutorial', url: 'https://tutorial.djangogirls.org/', type: 'tutorial', isFree: true },
-              { name: 'FastAPI Official Docs', url: 'https://fastapi.tiangolo.com/', type: 'documentation', isFree: true }
+              {
+                name: "WordPress.org Learn",
+                url: "https://learn.wordpress.org/",
+                type: "course",
+                isFree: true,
+              },
+              {
+                name: "WPBeginner Guides",
+                url: "https://www.wpbeginner.com/guides/",
+                type: "tutorial",
+                isFree: true,
+              },
             ],
-            project: 'Build a REST API for a todo application'
-          }
-        ]
-      }
-    ]
-  },
-  
-  {
-    id: 'devops',
-    title: 'DevOps Engineer Roadmap',
-    keywords: ['devops', 'aws', 'docker', 'kubernetes', 'ci/cd', 'jenkins', 'terraform', 'cloud'],
-    difficulty: 'advanced',
-    estimatedDays: 120,
-    phases: [
+            project: "Set up a complete WordPress site on localhost",
+          },
+          {
+            title: "Custom Theme Development",
+            description:
+              "Build custom WordPress themes from scratch using PHP, HTML, CSS, and JavaScript",
+            resources: [
+              {
+                name: "WordPress Theme Handbook",
+                url: "https://developer.wordpress.org/themes/",
+                type: "documentation",
+                isFree: true,
+              },
+              {
+                name: "Traversy Media WordPress Theme",
+                url: "https://youtu.be/-h7gOJbIpmo",
+                type: "video",
+                isFree: true,
+              },
+            ],
+            project: "Create a custom WordPress theme from scratch",
+          },
+          {
+            title: "Plugin Development & Customization",
+            description:
+              "Learn to create custom plugins and customize existing ones",
+            resources: [
+              {
+                name: "WordPress Plugin Handbook",
+                url: "https://developer.wordpress.org/plugins/",
+                type: "documentation",
+                isFree: true,
+              },
+              {
+                name: "WPTuts YouTube",
+                url: "https://www.youtube.com/@WPTuts",
+                type: "video",
+                isFree: true,
+              },
+            ],
+            project: "Build a custom contact form plugin",
+          },
+        ],
+      },
       {
-        phaseTitle: 'Phase 1: Linux & Networking (3 weeks)',
-        duration: '3 weeks',
+        phaseTitle: "Phase 3: Advanced WordPress (3 weeks)",
+        duration: "3 weeks",
         topics: [
           {
-            title: 'Linux Administration',
-            description: 'Command line, shell scripting, system administration',
+            title: "WooCommerce & E-Commerce",
+            description:
+              "Build and customize e-commerce stores with WooCommerce",
             resources: [
-              { name: 'Linux Journey', url: 'https://linuxjourney.com/', type: 'course', isFree: true },
-              { name: 'Bash Scripting Tutorial', url: 'https://linuxconfig.org/bash-scripting-tutorial', type: 'tutorial', isFree: true }
+              {
+                name: "WooCommerce Documentation",
+                url: "https://woocommerce.com/documentation/",
+                type: "documentation",
+                isFree: true,
+              },
+              {
+                name: "WooCommerce Developer Guide",
+                url: "https://developer.woocommerce.com/",
+                type: "documentation",
+                isFree: true,
+              },
             ],
-            project: 'Write shell scripts for system automation'
-          }
-        ]
-      }
-    ]
-  },
-  
-  {
-    id: 'data-science',
-    title: 'Data Science Roadmap',
-    keywords: ['data science', 'machine learning', 'python', 'pandas', 'numpy', 'tensorflow', 'ai', 'ml'],
-    difficulty: 'intermediate',
-    estimatedDays: 100,
-    phases: [
+            project: "Build a complete e-commerce store with WooCommerce",
+          },
+          {
+            title: "Page Builders & SEO",
+            description:
+              "Master Elementor, WPBakery, and WordPress SEO optimization",
+            resources: [
+              {
+                name: "Elementor Tutorials",
+                url: "https://elementor.com/academy/",
+                type: "course",
+                isFree: true,
+              },
+              {
+                name: "Yoast SEO Guide",
+                url: "https://yoast.com/wordpress-seo/",
+                type: "tutorial",
+                isFree: true,
+              },
+            ],
+            project: "Build a landing page with Elementor and optimize for SEO",
+          },
+          {
+            title: "Website Security & Performance",
+            description:
+              "Implement security best practices, caching, CDN, and speed optimization",
+            resources: [
+              {
+                name: "WordPress Security Guide",
+                url: "https://wordpress.org/support/category/security/",
+                type: "documentation",
+                isFree: true,
+              },
+              {
+                name: "Cloudflare Learning Center",
+                url: "https://www.cloudflare.com/learning/",
+                type: "documentation",
+                isFree: true,
+              },
+            ],
+            project:
+              "Secure and optimize a WordPress site to 90+ PageSpeed score",
+          },
+        ],
+      },
       {
-        phaseTitle: 'Phase 1: Python for Data Science (3 weeks)',
-        duration: '3 weeks',
+        phaseTitle: "Phase 4: Professional Skills (2 weeks)",
+        duration: "2 weeks",
         topics: [
           {
-            title: 'NumPy & Pandas',
-            description: 'Data manipulation, analysis, and visualization',
+            title: "Hosting & Deployment",
+            description:
+              "Learn cPanel, hosting management, DNS, SSL, and website migration",
             resources: [
-              { name: 'Kaggle Pandas Course', url: 'https://www.kaggle.com/learn/pandas', type: 'course', isFree: true },
-              { name: 'Data School Pandas', url: 'https://youtube.com/playlist?list=PL5-da3qGB5ICCsgW1MxlZ0Hq8LL5U3u9y', type: 'video', isFree: true }
+              {
+                name: "cPanel Documentation",
+                url: "https://docs.cpanel.net/",
+                type: "documentation",
+                isFree: true,
+              },
+              {
+                name: "DNS Guide",
+                url: "https://www.cloudflare.com/learning/dns/what-is-dns/",
+                type: "documentation",
+                isFree: true,
+              },
             ],
-            project: 'Analyze a real-world dataset from Kaggle'
-          }
-        ]
-      }
-    ]
-  }
-]
+            project: "Deploy a WordPress site to live hosting with SSL",
+          },
+          {
+            title: "Analytics & Tracking",
+            description:
+              "Set up Google Analytics, Tag Manager, Search Console, and conversion tracking",
+            resources: [
+              {
+                name: "Google Analytics Academy",
+                url: "https://analytics.google.com/analytics/academy/",
+                type: "course",
+                isFree: true,
+              },
+              {
+                name: "GTM Guide",
+                url: "https://support.google.com/tagmanager/",
+                type: "documentation",
+                isFree: true,
+              },
+            ],
+            project: "Set up complete tracking for a client website",
+          },
+        ],
+      },
+    ],
+  },
+];
 
-// Function to find matching roadmap
-export function findMatchingRoadmap(jobDescription: string): RoadmapTemplate | null {
-  const lowerDesc = jobDescription.toLowerCase()
-  
-  // Score each template based on keyword matches
-  const scored = ROADMAP_TEMPLATES.map(template => {
-    const matches = template.keywords.filter(keyword => 
-      lowerDesc.includes(keyword.toLowerCase())
-    )
-    return {
-      template,
-      score: matches.length,
-      matches
-    }
-  })
-  
-  // Sort by score and return best match
-  scored.sort((a, b) => b.score - a.score)
-  
-  // Only return if we have at least 2 keyword matches
-  if (scored[0].score >= 2) {
-    console.log('✅ Found local roadmap:', scored[0].template.title)
-    console.log('Matched keywords:', scored[0].matches)
-    return scored[0].template
+// 🎯 Smart matching with scoring
+export function findMatchingRoadmap(
+  jobDescription: string
+): RoadmapTemplate | null {
+  const lowerDesc = jobDescription.toLowerCase();
+
+  // Score each template
+  const scored = ROADMAP_TEMPLATES.map((template) => {
+    let score = 0;
+    const matchedKeywords: string[] = [];
+
+    template.keywords.forEach((keyword) => {
+      if (lowerDesc.includes(keyword.toLowerCase())) {
+        score += keyword.length > 5 ? 3 : 1; // Longer keywords = more specific
+        matchedKeywords.push(keyword);
+      }
+    });
+
+    // Bonus for multiple matches
+    if (matchedKeywords.length >= 3) score += 5;
+    if (matchedKeywords.length >= 5) score += 10;
+
+    return { template, score, matchedKeywords };
+  });
+
+  // Sort by score
+  scored.sort((a, b) => b.score - a.score);
+
+  // Return best match if score is high enough
+  if (scored[0].score >= 3) {
+    console.log(
+      `📚 Local match: ${scored[0].template.title} (score: ${scored[0].score})`
+    );
+    console.log(`🔑 Matched: ${scored[0].matchedKeywords.join(", ")}`);
+    return scored[0].template;
   }
-  
-  console.log('❌ No local match found, will use AI')
-  return null
+
+  return null;
 }
 
-// Extract skills from local template
 export function extractSkillsFromTemplate(template: RoadmapTemplate): any {
   return {
     jobTitle: template.title,
-    requiredSkills: template.keywords,
+    requiredSkills: template.keywords.slice(0, 8),
     niceToHaveSkills: [],
     tools: [],
     experienceLevel: template.difficulty,
-    keyResponsibilities: template.phases.map(p => p.phaseTitle)
-  }
+    keyResponsibilities: template.phases.map((p) => p.phaseTitle),
+  };
 }
- 
