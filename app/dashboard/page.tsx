@@ -125,7 +125,9 @@ export default function DashboardPage() {
         <div className="lg:col-span-2">
           <div className="bg-white rounded-xl shadow-sm border p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold">Active Roadmaps</h2>
+              <h2 className="text-xl font-semibold text-black">
+                Active Roadmaps
+              </h2>
               <Link
                 href="/dashboard/roadmaps"
                 className="text-sm text-purple-600 hover:text-purple-700 flex items-center gap-1"

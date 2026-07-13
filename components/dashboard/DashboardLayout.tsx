@@ -83,7 +83,7 @@ export default function DashboardLayout({
                 <input
                   type="text"
                   placeholder="Search roadmaps, jobs, skills..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border text-black f  outline-none focus:ring-0 border-gray-300 rounded-lg  "
                 />
               </div>
             </div>

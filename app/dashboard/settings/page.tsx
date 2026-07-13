@@ -283,7 +283,7 @@ export default function SettingsPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto">
+      <div className=" mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
           <p className="text-gray-600 mt-1">
@@ -347,7 +347,7 @@ export default function SettingsPage() {
                           display_name: e.target.value,
                         }))
                       }
-                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full pl-10 pr-4 py-2 border text-black border-gray-300 rounded-lg focus:outline-none"
                     />
                   </div>
 
@@ -364,7 +364,7 @@ export default function SettingsPage() {
                           bio: e.target.value,
                         }))
                       }
-                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full pl-10 pr-4 py-2 border text-black border-gray-300 rounded-lg focus:outline-none"
                     />
                   </div>
 
@@ -381,7 +381,7 @@ export default function SettingsPage() {
                           website: e.target.value,
                         }))
                       }
-                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full pl-10 pr-4 py-2 border text-black border-gray-300 rounded-lg focus:outline-none"
                     />
                   </div>
 
@@ -400,7 +400,7 @@ export default function SettingsPage() {
                             github_url: e.target.value,
                           }))
                         }
-                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full pl-10 pr-4 py-2 border text-black border-gray-300 rounded-lg focus:outline-none"
                       />
                     </div>
                     <div>
@@ -417,7 +417,7 @@ export default function SettingsPage() {
                             linkedin_url: e.target.value,
                           }))
                         }
-                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full pl-10 pr-4 py-2 border text-black border-gray-300 rounded-lg focus:outline-none"
                       />
                     </div>
                   </div>
@@ -436,7 +436,9 @@ export default function SettingsPage() {
 
             {activeTab === "preferences" && (
               <div>
-                <h2 className="text-2xl font-semibold mb-6 text-black">Preferences</h2>
+                <h2 className="text-2xl font-semibold mb-6 text-black">
+                  Preferences
+                </h2>
 
                 <div className="space-y-6">
                   <div>
@@ -450,7 +452,7 @@ export default function SettingsPage() {
                           onClick={() =>
                             setPreferencesForm((prev) => ({ ...prev, theme }))
                           }
-                          className={`p-4 rounded-xl border-2 text-center capitalize ${
+                          className={`p-4 rounded-xl border-2 text-black text-center capitalize ${
                             preferencesForm.theme === theme
                               ? "border-purple-500 bg-purple-50"
                               : "border-gray-200"
@@ -475,7 +477,7 @@ export default function SettingsPage() {
                           default_mode: e.target.value as any,
                         }))
                       }
-                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full pl-10 pr-4 py-2 border text-black border-gray-300 rounded-lg focus:outline-none"
                     >
                       <option value="auto">Auto (Local + AI)</option>
                       <option value="local-only">Local Only</option>
@@ -485,7 +487,9 @@ export default function SettingsPage() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Auto-save Roadmaps</p>
+                      <p className="font-medium text-black">
+                        Auto-save Roadmaps
+                      </p>
                       <p className="text-sm text-gray-600">
                         Automatically save generated roadmaps
                       </p>
@@ -527,7 +531,9 @@ export default function SettingsPage() {
 
             {activeTab === "notifications" && (
               <div>
-                <h2 className="text-2xl font-semibold mb-6 text-black">Notifications</h2>
+                <h2 className="text-2xl font-semibold mb-6 text-black">
+                  Notifications
+                </h2>
                 <div className="space-y-4">
                   {[
                     {
@@ -551,7 +557,7 @@ export default function SettingsPage() {
                       className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
                     >
                       <div>
-                        <p className="font-medium">{notif.label}</p>
+                        <p className="font-medium text-black">{notif.label}</p>
                         <p className="text-sm text-gray-600">{notif.desc}</p>
                       </div>
                       <button
@@ -596,14 +602,16 @@ export default function SettingsPage() {
             {/* Other tabs remain similar but simplified */}
             {activeTab === "api-keys" && (
               <div>
-                <h2 className="text-2xl font-semibold mb-6 text-black">API Keys</h2>
+                <h2 className="text-2xl font-semibold mb-6 text-black">
+                  API Keys
+                </h2>
                 <div className="flex gap-2 mb-6">
                   <input
                     type="text"
                     value={newKeyName}
                     onChange={(e) => setNewKeyName(e.target.value)}
                     placeholder="Key name..."
-                    className="flex-1 px-4 py-2 border rounded-lg"
+                    className="w-full pl-10 pr-4 py-2 border text-black border-gray-300 rounded-lg focus:outline-none"
                   />
                   <button
                     onClick={handleCreateAPIKey}
@@ -625,14 +633,14 @@ export default function SettingsPage() {
                       className="flex items-center justify-between p-4 bg-gray-50 rounded-xl mb-2"
                     >
                       <div>
-                        <p className="font-medium">{key.name}</p>
-                        <p className="text-sm text-gray-500">
+                        <p className="font-medium text-black">{key.name}</p>
+                        <p className="text-sm text-black">
                           {new Date(key.created_at).toLocaleDateString()}
                         </p>
                       </div>
                       <button
                         onClick={() => handleRevokeKey(key.id)}
-                        className="text-red-600 text-sm"
+                        className="text-black font-medium cursor-pointer text-sm bg-white rounded-md p-2 shadow"
                       >
                         Revoke
                       </button>
@@ -649,7 +657,9 @@ export default function SettingsPage() {
                 </h2>
                 <div className="space-y-6">
                   <div className="p-6 bg-gray-50 rounded-xl">
-                    <h3 className="font-semibold mb-2 text-black">Export Data</h3>
+                    <h3 className="font-semibold mb-2 text-black">
+                      Export Data
+                    </h3>
                     <button
                       onClick={handleExportData}
                       className="flex items-center gap-2 bg-white text-black border px-4 py-2 rounded-lg"

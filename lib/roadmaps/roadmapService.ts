@@ -4,6 +4,7 @@ const db = supabase;
 
 // 🎯 Type matching your EXACT table structure
 export type SavedRoadmap = {
+  source: string;
   id: string;
   user_id: string;
   job_post_id?: string | null;

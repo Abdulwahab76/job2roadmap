@@ -110,7 +110,7 @@ export default function MyRoadmapsPage() {
             placeholder="Search roadmaps..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+            className="w-full pl-10 pr-4 py-2 border text-black border-gray-300 rounded-lg focus:outline-none"
           />
         </div>
       </div>
@@ -190,7 +190,7 @@ export default function MyRoadmapsPage() {
                 </div>
 
                 <p className="text-xs text-gray-500">
-                  Created {new Date(roadmap.created_at).toLocaleDateString()}
+                  Created {roadmap.created_at ? new Date(roadmap.created_at).toLocaleDateString() : "Unknown"}
                 </p>
               </div>
 
@@ -206,7 +206,7 @@ export default function MyRoadmapsPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() =>
-                      handleToggleVisibility(roadmap.id, roadmap.is_public)
+                      handleToggleVisibility(roadmap.id, roadmap.is_public ?? false)
                     }
                     className="p-2 hover:bg-gray-100 rounded-lg"
                     title={roadmap.is_public ? "Make Private" : "Make Public"}
