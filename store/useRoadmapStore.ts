@@ -3,7 +3,7 @@ import { create } from "zustand";
 type GenerationMode = "auto" | "local-only" | "ai-only";
 
 type RoadmapStore = {
-  currentStep: "input" | "roadmap";
+  currentStep: "input" | "roadmap" | "skills";
   jobDescription: string;
   extractedSkills: any;
   roadmap: any;

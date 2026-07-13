@@ -1,4 +1,5 @@
 "use client";
+
 import { motion } from "framer-motion";
 import { TypeAnimation } from "react-type-animation";
 import { ArrowRight, Play, Star, Zap, Users, Globe } from "lucide-react";
@@ -6,8 +7,22 @@ import { useAuth } from "@/context/authContext";
 import { signInWithGoogle } from "@/lib/firebase";
 import Link from "next/link";
 
-export default function HeroSection() {
+type HeroSectionProps = {
+  onGetStarted?: () => void;
+};
+
+export default function HeroSection({ onGetStarted }: HeroSectionProps) {
   const { user } = useAuth();
+
+  const handleGetStarted = () => {
+    if (user && onGetStarted) {
+      onGetStarted();
+    } else if (!user) {
+      signInWithGoogle();
+    } else {
+      onGetStarted?.();
+    }
+  };
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700">
@@ -17,9 +32,6 @@ export default function HeroSection() {
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
         <div className="absolute top-40 left-40 w-80 h-80 bg-pink-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
       </div>
-
-      {/* Grid Pattern */}
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djJIMjR2LTJoMTJ6TTM2IDI0djJIMjR2LTJoMTJ6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-20"></div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
         <div className="text-center">
@@ -82,23 +94,13 @@ export default function HeroSection() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-4 justify-center mb-12"
           >
-            {user ? (
-              <Link
-                href="/create"
-                className="group bg-white text-purple-600 px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl transition-all inline-flex items-center gap-2"
-              >
-                Go to Dashboard
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            ) : (
-              <button
-                onClick={signInWithGoogle}
-                className="group bg-white text-purple-600 px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl transition-all inline-flex items-center gap-2"
-              >
-                Get Started Free
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
-            )}
+            <button
+              onClick={handleGetStarted}
+              className="group bg-white text-purple-600 px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl transition-all inline-flex items-center gap-2 transform hover:scale-105"
+            >
+              {user ? "Create Your Roadmap" : "Get Started Free"}
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </button>
             <a
               href="#how-it-works"
               className="group bg-white/10 backdrop-blur-md text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/20 transition-all inline-flex items-center gap-2 border border-white/20"

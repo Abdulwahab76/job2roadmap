@@ -1,15 +1,19 @@
 "use client";
 
 import { useEffect } from "react";
-import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/authContext";
+import { useRoadmapStore } from "@/store/useRoadmapStore";
 import JobInput from "@/components/JobInput";
+import RoadmapView from "@/components/canvas/RoadmapView";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 
 export default function CreatePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { currentStep } = useRoadmapStore();
 
+  // Auth check
   useEffect(() => {
     if (!loading && !user) {
       router.push("/");
@@ -28,7 +32,13 @@ export default function CreatePage() {
 
   return (
     <DashboardLayout>
-      <JobInput />
+      {/* Agar roadmap generate ho gaya to Canvas dikhao */}
+      {currentStep === "roadmap" ? (
+        <RoadmapView />
+      ) : (
+        /* Nahi to JobInput form dikhao */
+        <JobInput />
+      )}
     </DashboardLayout>
   );
 }
