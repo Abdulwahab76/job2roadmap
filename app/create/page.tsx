@@ -33,12 +33,7 @@ export default function CreatePage() {
   return (
     <DashboardLayout>
       {/* Agar roadmap generate ho gaya to Canvas dikhao */}
-      {currentStep === "roadmap" ? (
-        <RoadmapView />
-      ) : (
-        /* Nahi to JobInput form dikhao */
-        <JobInput />
-      )}
+      <JobInput />
     </DashboardLayout>
   );
 }

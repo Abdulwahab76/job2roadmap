@@ -25,6 +25,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { analyzeInput, validateJobInput } from "@/lib/validator";
+import { useRouter } from "next/navigation";
 
 type GenerationMode = "auto" | "local-only" | "ai-only";
 
@@ -47,6 +48,8 @@ const QUICK_STACKS = [
 
 export default function JobInput() {
   const { user } = useAuth();
+  const router = useRouter();
+
   const {
     jobDescription,
     setJobDescription,
@@ -109,10 +112,12 @@ export default function JobInput() {
           jobDescription,
           mode,
           userId: user?.uid || "anonymous",
+          
         }),
       });
 
       const data = await response.json();
+      console.log(data, "daa===");
 
       if (data.success) {
         incrementUsage(!!user);
@@ -120,7 +125,17 @@ export default function JobInput() {
 
         setSkills(data.skills);
         setRoadmap(data.roadmap, data.source);
-        setStep("roadmap"); // This triggers canvas view
+
+        // 🎯 Smart redirect logic
+        if (data.savedId) {
+          // Saved to DB successfully - go to ID route
+          console.log("✅ Redirecting to /roadmap/" + data.savedId);
+          router.push(`/roadmap/${data.savedId}`);
+        } else {
+          // No savedId - show roadmap directly using store
+          console.log("⚠️ No savedId, showing roadmap directly");
+          setStep("roadmap");
+        }
       } else {
         setError(data.error || "Something went wrong");
       }
@@ -140,8 +155,8 @@ export default function JobInput() {
   const remaining = getRemainingGenerations(!!user);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-      <div className="max-w-4xl w-full bg-white rounded-2xl shadow-xl p-8">
+    <div className="min-h-screen   flex items-center justify-center  ">
+      <div className="  w-full   rounded-2xl  ">
         {/* Header with Usage Info */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -184,7 +199,7 @@ export default function JobInput() {
               <button
                 key={i}
                 onClick={() => handleQuickStack(stack)}
-                className="text-left p-3 border-2 border-gray-200 rounded-lg hover:border-purple-400 hover:bg-purple-50 transition-all group"
+                className="text-left bg-white p-3 border-2 border-gray-200 rounded-lg hover:border-purple-400 hover:bg-purple-50 transition-all group"
               >
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-lg">{stack.icon}</span>

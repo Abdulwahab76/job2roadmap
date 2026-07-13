@@ -1,240 +1,224 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import { useAuth } from "@/context/authContext";
+import {
+  getUserRoadmaps,
+  deleteRoadmap,
+  toggleRoadmapVisibility,
+  type SavedRoadmap,
+} from "@/lib/roadmaps/roadmapService";
 import Link from "next/link";
 import {
   PlusCircle,
   Search,
-  Filter,
   Trash2,
-  MoreVertical,
+  Eye,
+  EyeOff,
   Clock,
   BarChart3,
-  BookOpen,
-  Share2,
-  Download,
+  ExternalLink,
+  Loader2,
 } from "lucide-react";
 
-const mockRoadmaps = [
-  {
-    id: 1,
-    title: "MERN Stack Developer Path",
-    source: "Local Template",
-    difficulty: "Intermediate",
-    estimatedDays: 90,
-    progress: 75,
-    topicsCompleted: 18,
-    totalTopics: 24,
-    createdAt: "2024-01-15",
-    lastModified: "2 hours ago",
-    isPublic: true,
-  },
-  {
-    id: 2,
-    title: "React Frontend Specialist",
-    source: "AI Generated",
-    difficulty: "Advanced",
-    estimatedDays: 60,
-    progress: 45,
-    topicsCompleted: 12,
-    totalTopics: 27,
-    createdAt: "2024-01-10",
-    lastModified: "1 day ago",
-    isPublic: false,
-  },
-  {
-    id: 3,
-    title: "DevOps Engineer Roadmap",
-    source: "Local Template",
-    difficulty: "Advanced",
-    estimatedDays: 120,
-    progress: 20,
-    topicsCompleted: 5,
-    totalTopics: 25,
-    createdAt: "2024-01-05",
-    lastModified: "3 days ago",
-    isPublic: true,
-  },
-];
-
-export default function RoadmapsPage() {
+export default function MyRoadmapsPage() {
+  const { user } = useAuth();
+  const router = useRouter();
+  const [roadmaps, setRoadmaps] = useState<SavedRoadmap[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterDifficulty, setFilterDifficulty] = useState("all");
-  const [sortBy, setSortBy] = useState("recent");
 
-  const filteredRoadmaps = mockRoadmaps
-    .filter((r) => r.title.toLowerCase().includes(searchQuery.toLowerCase()))
-    .filter(
-      (r) =>
-        filterDifficulty === "all" ||
-        r.difficulty.toLowerCase() === filterDifficulty
-    );
+  useEffect(() => {
+    if (user) {
+      loadRoadmaps();
+    }
+  }, [user]);
+
+  const loadRoadmaps = async () => {
+    if (!user) return;
+    try {
+      setLoading(true);
+      const data = await getUserRoadmaps(user.uid);
+      setRoadmaps(data);
+    } catch (error) {
+      console.error("Error loading roadmaps:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  console.log(roadmaps, "roadmaps");
+
+  const handleDelete = async (id: string) => {
+    if (!user || !confirm("Delete this roadmap?")) return;
+    try {
+      await deleteRoadmap(id, user.uid);
+      setRoadmaps((prev) => prev.filter((r) => r.id !== id));
+    } catch (error) {
+      console.error("Error deleting:", error);
+    }
+  };
+
+  const handleToggleVisibility = async (
+    id: string,
+    currentVisibility: boolean
+  ) => {
+    if (!user) return;
+    try {
+      await toggleRoadmapVisibility(id, user.uid, !currentVisibility);
+      setRoadmaps((prev) =>
+        prev.map((r) =>
+          r.id === id ? { ...r, is_public: !currentVisibility } : r
+        )
+      );
+    } catch (error) {
+      console.error("Error toggling visibility:", error);
+    }
+  };
+
+  const filteredRoadmaps = roadmaps.filter((r) =>
+    r.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <DashboardLayout>
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Roadmaps</h1>
-          <p className="text-gray-600 mt-1">
-            {mockRoadmaps.length} roadmaps created
-          </p>
-        </div>
-        <Link
-          href="/create"
-          className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:shadow-lg transition-all"
-        >
-          <PlusCircle className="w-5 h-5" />
-          Create New Roadmap
-        </Link>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border p-4 mb-6">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search roadmaps..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-            />
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">My Roadmaps</h1>
+            <p className="text-gray-600 mt-1">
+              {roadmaps.length} roadmaps created
+            </p>
           </div>
-          <select
-            value={filterDifficulty}
-            onChange={(e) => setFilterDifficulty(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+          <button
+            onClick={() => router.push("/create")}
+            className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:shadow-lg transition-all"
           >
-            <option value="all">All Levels</option>
-            <option value="beginner">Beginner</option>
-            <option value="intermediate">Intermediate</option>
-            <option value="advanced">Advanced</option>
-          </select>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-          >
-            <option value="recent">Most Recent</option>
-            <option value="progress">Highest Progress</option>
-            <option value="name">Alphabetical</option>
-          </select>
+            <PlusCircle className="w-5 h-5" />
+            Create New
+          </button>
         </div>
       </div>
 
-      {/* Roadmaps Grid */}
-      {filteredRoadmaps.length === 0 ? (
+      {/* Search */}
+      <div className="mb-6">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search roadmaps..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+          />
+        </div>
+      </div>
+
+      {/* Roadmaps List */}
+      {loading ? (
+        <div className="text-center py-16">
+          <Loader2 className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-4" />
+          <p className="text-gray-600">Loading roadmaps...</p>
+        </div>
+      ) : filteredRoadmaps.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-xl shadow-sm border">
-          <BookOpen className="w-20 h-20 text-gray-300 mx-auto mb-4" />
+          <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-700 mb-2">
-            No roadmaps found
+            No roadmaps yet
           </h2>
           <p className="text-gray-500 mb-6">
-            {searchQuery
-              ? "Try different search terms"
-              : "Create your first learning roadmap!"}
+            Create your first learning roadmap!
           </p>
-          <Link
-            href="/create"
+          <button
+            onClick={() => router.push("/create")}
             className="inline-flex items-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700"
           >
             <PlusCircle className="w-5 h-5" />
             Create Roadmap
-          </Link>
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredRoadmaps.map((roadmap) => (
             <div
               key={roadmap.id}
-              className="bg-white rounded-xl shadow-sm border hover:shadow-lg transition-all group"
+              className="bg-white rounded-xl shadow-sm border hover:shadow-lg transition-all"
             >
-              {/* Card Header */}
-              <div className="p-6 pb-4">
-                <div className="flex items-start justify-between mb-4">
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <span
                         className={`text-xs px-2 py-1 rounded-full font-medium ${
-                          roadmap.source === "Local Template"
+                          roadmap.source === "local"
                             ? "bg-green-100 text-green-700"
                             : "bg-blue-100 text-blue-700"
                         }`}
                       >
-                        {roadmap.source}
+                        {roadmap.source === "local" ? "⚡ Local" : "🤖 AI"}
                       </span>
-                      {roadmap.isPublic && (
+                      {roadmap.is_public ? (
                         <span className="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-700">
                           Public
                         </span>
+                      ) : (
+                        <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                          Private
+                        </span>
                       )}
                     </div>
+
+                    {/* 🎯 ID-Based Link */}
                     <Link href={`/roadmap/${roadmap.id}`}>
                       <h3 className="text-lg font-semibold text-gray-900 hover:text-purple-600 transition-colors">
                         {roadmap.title}
                       </h3>
                     </Link>
                   </div>
-                  <button className="p-2 hover:bg-gray-100 rounded-lg">
-                    <MoreVertical className="w-5 h-5 text-gray-400" />
-                  </button>
                 </div>
 
                 <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
                   <span className="flex items-center gap-1">
                     <BarChart3 className="w-4 h-4" />
-                    {roadmap.difficulty}
+                    {roadmap.difficulty_level || "N/A"}
                   </span>
                   <span className="flex items-center gap-1">
                     <Clock className="w-4 h-4" />
-                    {roadmap.estimatedDays}d
+                    {roadmap.estimated_days || 0}d
                   </span>
                 </div>
 
-                {/* Progress Bar */}
-                <div className="mb-2">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">Progress</span>
-                    <span className="font-medium text-gray-900">
-                      {roadmap.progress}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="h-2 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 transition-all"
-                      style={{ width: `${roadmap.progress}%` }}
-                    ></div>
-                  </div>
-                </div>
-
                 <p className="text-xs text-gray-500">
-                  {roadmap.topicsCompleted}/{roadmap.totalTopics} topics
-                  completed
+                  Created {new Date(roadmap.created_at).toLocaleDateString()}
                 </p>
               </div>
 
-              {/* Card Footer */}
+              {/* Actions */}
               <div className="border-t px-6 py-3 flex items-center justify-between">
-                <span className="text-xs text-gray-500">
-                  Modified {roadmap.lastModified}
-                </span>
+                <Link
+                  href={`/roadmap/${roadmap.id}`}
+                  className="text-sm text-purple-600 hover:text-purple-700 flex items-center gap-1"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  View
+                </Link>
                 <div className="flex gap-2">
                   <button
+                    onClick={() =>
+                      handleToggleVisibility(roadmap.id, roadmap.is_public)
+                    }
                     className="p-2 hover:bg-gray-100 rounded-lg"
-                    title="Share"
+                    title={roadmap.is_public ? "Make Private" : "Make Public"}
                   >
-                    <Share2 className="w-4 h-4 text-gray-400" />
+                    {roadmap.is_public ? (
+                      <EyeOff className="w-4 h-4 text-gray-400" />
+                    ) : (
+                      <Eye className="w-4 h-4 text-gray-400" />
+                    )}
                   </button>
                   <button
-                    className="p-2 hover:bg-gray-100 rounded-lg"
-                    title="Download"
-                  >
-                    <Download className="w-4 h-4 text-gray-400" />
-                  </button>
-                  <button
+                    onClick={() => handleDelete(roadmap.id)}
                     className="p-2 hover:bg-red-50 rounded-lg"
                     title="Delete"
                   >

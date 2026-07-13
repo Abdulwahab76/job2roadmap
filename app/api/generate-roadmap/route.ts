@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+ import { NextResponse } from "next/server";
 import {
   findMatchingRoadmap,
   extractSkillsFromTemplate,
@@ -6,15 +6,14 @@ import {
 import { extractSkillsFromJob, generateLearningRoadmap } from "@/lib/gemini";
 import { validateJobInput } from "@/lib/validator";
 import { canGenerate, incrementUsage } from "@/lib/usageTracker";
+import { saveRoadmap } from "@/lib/roadmaps/roadmapService";
 
 export async function POST(request: Request) {
   try {
     const { jobDescription, mode = "auto", userId } = await request.json();
-
-    // Check if user is authenticated
     const isAuthenticated = userId && userId !== "anonymous";
 
-    // Check usage limits (skip for local-only mode)
+    // Check usage limits
     if (mode !== "local-only") {
       const usageCheck = canGenerate(isAuthenticated);
       if (!usageCheck.canGenerate) {
@@ -23,7 +22,6 @@ export async function POST(request: Request) {
             success: false,
             error: usageCheck.message,
             usageLimitReached: true,
-            remainingToday: usageCheck.remainingToday,
           },
           { status: 429 }
         );
@@ -34,68 +32,79 @@ export async function POST(request: Request) {
     const validation = validateJobInput(jobDescription);
     if (!validation.isValid) {
       return NextResponse.json(
-        {
-          success: false,
-          error: validation.errors.join(" "),
-          validation,
-        },
+        { success: false, error: validation.errors.join(" ") },
         { status: 400 }
       );
     }
 
-    console.log(
-      `🔍 Processing (Mode: ${mode}, User: ${userId || "anonymous"})...`
-    );
+    console.log(`🔍 Processing for user: ${userId || "anonymous"}`);
 
-    // Try local first
+    let skills: any = null;
+    let roadmap: any = null;
+    let source = "local";
+
+    // Try local template
     if (mode === "auto" || mode === "local-only") {
       const localTemplate = findMatchingRoadmap(jobDescription);
-
       if (localTemplate) {
-        // Local templates don't count towards usage
-        console.log("📚 Using local template:", localTemplate.title);
-
-        return NextResponse.json({
-          success: true,
-          source: "local",
-          validation,
-          skills: extractSkillsFromTemplate(localTemplate),
-          roadmap: {
-            title: localTemplate.title,
-            difficulty: localTemplate.difficulty,
-            estimatedDays: localTemplate.estimatedDays,
-            phases: localTemplate.phases,
-          },
-        });
+        console.log("📚 Local template:", localTemplate.title);
+        skills = extractSkillsFromTemplate(localTemplate);
+        roadmap = {
+          title: localTemplate.title,
+          difficulty: localTemplate.difficulty,
+          estimatedDays: localTemplate.estimatedDays,
+          phases: localTemplate.phases,
+        };
+        source = "local";
       }
     }
 
-    // Use AI (counts towards usage)
-    if (mode === "auto" || mode === "ai-only") {
-      console.log("🤖 Using AI generation...");
-
-      const skills = await extractSkillsFromJob(jobDescription);
-      const roadmap = await generateLearningRoadmap(skills);
-
-      return NextResponse.json({
-        success: true,
-        source: "ai",
-        validation,
-        skills,
-        roadmap,
-      });
+    // Try AI
+    if (!roadmap && (mode === "auto" || mode === "ai-only")) {
+      console.log("🤖 Using AI...");
+      skills = await extractSkillsFromJob(jobDescription);
+      roadmap = await generateLearningRoadmap(skills);
+      source = "ai";
+      incrementUsage(isAuthenticated);
     }
 
-    throw new Error("Invalid mode");
+    if (!roadmap || !skills) {
+      throw new Error("Failed to generate roadmap");
+    }
+
+    // 🎯 ALWAYS TRY TO SAVE
+    let savedId = null;
+    try {
+      console.log("💾 Saving to database...");
+      const saved = await saveRoadmap({
+        userId: userId || "anonymous",
+        title: roadmap.title,
+        jobDescription,
+        skills,
+        roadmap,
+        source: source as any,
+      });
+      savedId = saved.id;
+      console.log("✅ SAVED! ID:", savedId);
+    } catch (saveError: any) {
+      console.error("❌ Save failed:", saveError.message);
+      // Continue even if save fails
+    }
+
+    return NextResponse.json({
+      success: true,
+      source,
+      skills,
+      roadmap,
+      savedId, // Should not be null now!
+    });
+
   } catch (error: any) {
     console.error("❌ Error:", error.message);
-
     return NextResponse.json(
-      {
-        success: false,
-        error: error.message || "Failed to generate roadmap",
-      },
+      { success: false, error: error.message },
       { status: 500 }
     );
   }
 }
+ 

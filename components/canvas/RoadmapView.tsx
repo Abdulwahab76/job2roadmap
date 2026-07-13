@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   Circle,
 } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 
 // Dynamic import for canvas (heavy component)
 const RoadmapCanvas = dynamic(
@@ -43,8 +44,11 @@ export default function RoadmapView() {
   const [viewMode, setViewMode] = useState<ViewMode>("canvas");
   const [fullscreen, setFullscreen] = useState(false);
   const [showStats, setShowStats] = useState(true);
+  let router = useRouter();
+  const pathname = usePathname();
 
   if (!roadmap) return null;
+  console.log(roadmap, "roadmap");
 
   // Calculate stats
   const totalTopics =
@@ -54,6 +58,36 @@ export default function RoadmapView() {
     ) || 0;
   const totalPhases = roadmap.phases?.length || 0;
   const estimatedDays = roadmap.estimatedDays || 0;
+  const isSavedRoadmap = pathname?.startsWith("/roadmap/");
+  const isCreatePage = pathname?.startsWith("/create");
+
+  const handleBack = () => {
+    if (isSavedRoadmap) {
+      // Viewing a saved roadmap → Go to Dashboard My Roadmaps
+      router.push("/dashboard/roadmaps");
+    } else if (isCreatePage) {
+      // On create page → Go back to input form
+      setStep("input");
+    } else {
+      // Default → Go to Dashboard
+      router.push("/dashboard");
+    }
+  };
+  if (!roadmap) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <p className="text-gray-500 text-lg mb-4">No roadmap data found</p>
+          <button
+            onClick={() => router.push("/dashboard/roadmaps")}
+            className="text-purple-600 hover:text-purple-700 underline"
+          >
+            Back to My Roadmaps
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -64,12 +98,12 @@ export default function RoadmapView() {
             {/* Left Section */}
             <div className="flex items-center gap-3">
               <button
-                onClick={() => setStep("input")}
+                onClick={handleBack}
                 className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span className="hidden sm:inline text-sm font-medium">
-                  Back
+                  {isSavedRoadmap ? "My Roadmaps" : "Back"}
                 </span>
               </button>
 
@@ -132,7 +166,7 @@ export default function RoadmapView() {
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                       viewMode === mode
                         ? "bg-white shadow-sm text-purple-600"
-                        : "text-gray-600 hover:text-gray-900"
+                        : "text-black hover:text-gray-900"
                     }`}
                     title={`${label} View`}
                   >

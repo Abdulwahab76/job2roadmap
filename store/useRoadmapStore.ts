@@ -7,14 +7,14 @@ type RoadmapStore = {
   jobDescription: string;
   extractedSkills: any;
   roadmap: any;
-  source: "local" | "ai" | null;
+  source: "local" | "ai" | "cache" | null;
   mode: GenerationMode;
   loading: boolean;
   error: string | null;
 
   setJobDescription: (desc: string) => void;
   setSkills: (skills: any) => void;
-  setRoadmap: (roadmap: any, source?: "local" | "ai") => void;
+  setRoadmap: (roadmap: any, source?: "local" | "ai" | "cache") => void;
   setStep: (step: "input" | "roadmap") => void;
   setMode: (mode: GenerationMode) => void;
   setLoading: (loading: boolean) => void;
