@@ -9,108 +9,118 @@ import {
   Zap,
   BarChart3,
   Share2,
-  Shield,
+  ShieldCheck,
   Sparkles,
 } from "lucide-react";
 
 const features = [
   {
     icon: Brain,
-    title: "AI Skill Extraction",
+    coordinate: "A1",
+    title: "AI skill extraction",
     description:
-      "Our AI instantly identifies required skills from any job description.",
-    color: "from-purple-500 to-pink-500",
+      "The AI reads any job post and pulls out exactly what it's asking for, no keyword guessing.",
   },
   {
     icon: BookOpen,
-    title: "Curated Resources",
-    description: "Get hand-picked free courses, tutorials, and documentation.",
-    color: "from-blue-500 to-cyan-500",
+    coordinate: "A2",
+    title: "Curated resources",
+    description:
+      "Every waypoint comes stocked with hand-picked free courses, docs, and tutorials.",
   },
   {
     icon: Target,
-    title: "Personalized Path",
-    description: "Roadmaps tailored to your target role and experience level.",
-    color: "from-green-500 to-emerald-500",
+    coordinate: "A3",
+    title: "Personalized path",
+    description:
+      "Routes are cut to your target role and where you're starting from, not a generic track.",
   },
   {
     icon: Zap,
-    title: "Instant Results",
-    description: "Get your complete learning path in seconds, not hours.",
-    color: "from-yellow-500 to-orange-500",
+    coordinate: "A4",
+    title: "Instant results",
+    description:
+      "A full route from here to hired, generated in seconds instead of hours of research.",
   },
   {
     icon: BarChart3,
-    title: "Progress Tracking",
-    description: "Track your learning journey with visual progress indicators.",
-    color: "from-red-500 to-pink-500",
+    coordinate: "B1",
+    title: "Progress tracking",
+    description:
+      "Watch your position move down the trail as you clear each skill on the map.",
   },
   {
     icon: Share2,
-    title: "Share & Collaborate",
-    description: "Share roadmaps with peers and learn together.",
-    color: "from-indigo-500 to-purple-500",
+    coordinate: "B2",
+    title: "Share and collaborate",
+    description:
+      "Send a route to a friend or study group and hike the same trail together.",
   },
   {
-    icon: Shield,
-    title: "Industry Verified",
-    description: "Roadmaps based on real job market requirements.",
-    color: "from-teal-500 to-green-500",
+    icon: ShieldCheck,
+    coordinate: "B3",
+    title: "Industry verified",
+    description:
+      "Every path is checked against real, current job market requirements, not stale lists.",
   },
   {
     icon: Sparkles,
-    title: "Always Updated",
-    description: "Continuously updated with latest tech trends and tools.",
-    color: "from-orange-500 to-red-500",
+    coordinate: "B4",
+    title: "Always updated",
+    description:
+      "The map redraws itself as tools and tech stacks shift, so your route stays current.",
   },
 ];
 
 export default function FeaturesSection() {
-  const [ref, inView] = useInView({
-    triggerOnce: true,
-    threshold: 0.1,
-  });
+  const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.08 });
 
   return (
-    <section id="features" className="py-24 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="features" className="relative bg-[#EDF0E6] py-28">
+      <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
         <motion.div
           ref={ref}
-          initial={{ opacity: 0, y: 50 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="mx-auto mb-16 max-w-2xl text-center"
         >
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Everything You Need to{" "}
-            <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              Land the Job
-            </span>
+          <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.2em] text-[#5F7A6C]">
+            Waypoint legend
+          </p>
+          <h2 className="font-display text-4xl font-semibold tracking-tight text-[#12141C] md:text-5xl">
+            Everything on the map to land the job
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            From skill extraction to progress tracking, we've got you covered
-            every step of the way.
+          <p className="mt-4 text-lg leading-relaxed text-[#4A5160]">
+            From reading the job post to tracking the last skill you clear,
+            here's what's marked on every route.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
           {features.map((feature, index) => (
             <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 30 }}
+              key={feature.coordinate}
+              initial={{ opacity: 0, y: 24 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="group bg-white rounded-2xl p-8 hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-transparent"
+              transition={{ duration: 0.5, delay: (index % 4) * 0.08 }}
+              className="group relative rounded-xl border border-[#D7DACB] bg-[#F7F8F2] p-7 transition-colors hover:border-[#2FE6A8]"
             >
-              <div
-                className={`w-14 h-14 bg-gradient-to-br ${feature.color} rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform`}
-              >
-                <feature.icon className="w-7 h-7 text-white" />
+              <div className="mb-6 flex items-start justify-between">
+                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#12141C] transition-colors group-hover:bg-[#2FE6A8]">
+                  <feature.icon
+                    className="h-5 w-5 text-[#2FE6A8] transition-colors group-hover:text-[#0A2A20]"
+                    strokeWidth={1.75}
+                  />
+                </div>
+                <span className="font-mono text-[11px] tracking-widest text-[#9AA192]">
+                  {feature.coordinate}
+                </span>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">
+              <h3 className="mb-2 font-display text-lg font-semibold text-[#12141C]">
                 {feature.title}
               </h3>
-              <p className="text-gray-600 leading-relaxed">
+              <p className="text-[15px] leading-relaxed text-[#5B6152]">
                 {feature.description}
               </p>
             </motion.div>

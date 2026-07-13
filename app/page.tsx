@@ -9,6 +9,7 @@ import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
 import JobInput from "@/components/JobInput";
 import RoadmapView from "@/components/RoadmapView";
+import ScrollTrail from "@/components/Scrolltrail";
 
 export default function Home() {
   const { currentStep } = useRoadmapStore();
@@ -33,11 +34,15 @@ export default function Home() {
 
   // Default Landing Page
   return (
-    <main className="min-h-screen">
-      <Navbar />
-      <HeroSection onGetStarted={() => setShowGenerator(true)} />
-      <FeaturesSection />
-      <HowItWorks />
+    <main className="relative bg-[#0A0E1A]">
+      {/* Traces the route from the hero through how-it-works. */}
+      <div className="relative">
+        <Navbar />
+        <ScrollTrail />
+        <HeroSection />
+        <FeaturesSection />
+        <HowItWorks />
+      </div>
       <Footer />
     </main>
   );

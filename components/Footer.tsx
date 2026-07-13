@@ -1,63 +1,63 @@
-import Link from "next/link";
-import { Sparkles, Mail } from "lucide-react";
+import { Compass, Mail } from "lucide-react";
+
+const productLinks = ["Features", "How it works", "Pricing", "Roadmaps"];
+const companyLinks = ["About", "Blog", "Careers", "Contact"];
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-900 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Brand */}
-          <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-white" />
+    <footer className="border-t border-[#1C2436] bg-[#0A0E1A]">
+      <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-4">
+          <div className="md:col-span-2">
+            <div className="mb-4 flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#2FE6A8]">
+                <Compass className="h-5 w-5 text-[#08211A]" strokeWidth={2} />
               </div>
-              <span className="text-xl font-bold">Job2Roadmap</span>
+              <span className="font-display text-lg font-semibold text-[#EDF0E6]">
+                Job2Roadmap
+              </span>
             </div>
-            <p className="text-gray-400 mb-4 max-w-md">
-              Transform any job description into a personalized learning
-              roadmap. Powered by AI, built for your career growth.
+            <p className="max-w-sm text-[15px] leading-relaxed text-[#94A0B8]">
+              Turn any job description into a route you can actually walk. Built
+              to get you from here to hired.
             </p>
-            <div className="flex gap-4">
-              {[{ icon: Mail, href: "#" }].map((social, i) => (
-                <a
-                  key={i}
-                  href={social.href}
-                  className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-gray-700 transition-colors"
-                >
-                  <social.icon className="w-5 h-5" />
-                </a>
-              ))}
-            </div>
+            <a
+              href="mailto:hello@job2roadmap.com"
+              className="mt-6 inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[#232B40] text-[#94A0B8] transition-colors hover:border-[#2FE6A8] hover:text-[#2FE6A8]"
+              aria-label="Email Job2Roadmap"
+            >
+              <Mail className="h-4 w-4" strokeWidth={1.75} />
+            </a>
           </div>
 
-          {/* Links */}
           <div>
-            <h4 className="font-semibold mb-4">Product</h4>
-            <ul className="space-y-2">
-              {["Features", "How It Works", "Pricing", "Roadmaps"].map(
-                (link, i) => (
-                  <li key={i}>
-                    <a
-                      href="#"
-                      className="text-gray-400 hover:text-white transition-colors text-sm"
-                    >
-                      {link}
-                    </a>
-                  </li>
-                )
-              )}
+            <h4 className="mb-4 font-mono text-[11px] uppercase tracking-[0.15em] text-[#5C6884]">
+              Product
+            </h4>
+            <ul className="space-y-2.5">
+              {productLinks.map((link) => (
+                <li key={link}>
+                  <a
+                    href="#"
+                    className="text-sm text-[#94A0B8] transition-colors hover:text-[#EDF0E6]"
+                  >
+                    {link}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4">Company</h4>
-            <ul className="space-y-2">
-              {["About", "Blog", "Careers", "Contact"].map((link, i) => (
-                <li key={i}>
+            <h4 className="mb-4 font-mono text-[11px] uppercase tracking-[0.15em] text-[#5C6884]">
+              Company
+            </h4>
+            <ul className="space-y-2.5">
+              {companyLinks.map((link) => (
+                <li key={link}>
                   <a
                     href="#"
-                    className="text-gray-400 hover:text-white transition-colors text-sm"
+                    className="text-sm text-[#94A0B8] transition-colors hover:text-[#EDF0E6]"
                   >
                     {link}
                   </a>
@@ -67,8 +67,9 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400 text-sm">
-          <p>&copy; 2024 Job2Roadmap. All rights reserved.</p>
+        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-[#1C2436] pt-8 font-mono text-xs text-[#5C6884] md:flex-row">
+          <span>&copy; 2026 Job2Roadmap. All rights reserved.</span>
+          <span className="uppercase tracking-[0.15em]">end of trail</span>
         </div>
       </div>
     </footer>

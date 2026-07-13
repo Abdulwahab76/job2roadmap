@@ -1,18 +1,37 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { TypeAnimation } from "react-type-animation";
-import { ArrowRight, Play, Star, Zap, Users, Globe } from "lucide-react";
+import { ArrowUpRight, Compass, MapPin } from "lucide-react";
 import { useAuth } from "@/context/authContext";
 import { signInWithGoogle } from "@/lib/firebase";
-import Link from "next/link";
 
 type HeroSectionProps = {
   onGetStarted?: () => void;
 };
 
+const SKILL_NODES = [
+  { label: "React", x: 18, y: 28, delay: 0 },
+  { label: "TypeScript", x: 42, y: 14, delay: 0.15 },
+  { label: "System Design", x: 68, y: 24, delay: 0.3 },
+  { label: "SQL", x: 30, y: 52, delay: 0.45 },
+  { label: "AWS", x: 58, y: 56, delay: 0.6 },
+  { label: "Testing", x: 80, y: 46, delay: 0.75 },
+];
+
 export default function HeroSection({ onGetStarted }: HeroSectionProps) {
   const { user } = useAuth();
+  const sectionRef = useRef<HTMLElement>(null);
+
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"],
+  });
+
+  const mapRotate = useTransform(scrollYProgress, [0, 1], [8, -6]);
+  const mapY = useTransform(scrollYProgress, [0, 1], [0, 120]);
+  const fade = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
   const handleGetStarted = () => {
     if (user && onGetStarted) {
@@ -25,60 +44,76 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700">
-      {/* Animated Background */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-        <div className="absolute top-40 left-40 w-80 h-80 bg-pink-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+    <section
+      ref={sectionRef}
+      className="relative flex min-h-screen items-center overflow-hidden bg-[#0A0E1A] pt-28"
+    >
+      {/* Topographic contour field */}
+      <div className="absolute inset-0">
+        <svg
+          className="absolute inset-0 h-full w-full opacity-[0.35]"
+          viewBox="0 0 1200 900"
+          preserveAspectRatio="xMidYMid slice"
+        >
+          {[...Array(9)].map((_, i) => (
+            <path
+              key={i}
+              d={`M -100 ${120 + i * 90} C 250 ${40 + i * 90}, 450 ${
+                220 + i * 90
+              }, 700 ${100 + i * 90} S 1150 ${180 + i * 90}, 1400 ${
+                90 + i * 90
+              }`}
+              fill="none"
+              stroke="#1C2436"
+              strokeWidth="1.5"
+            />
+          ))}
+        </svg>
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0A0E1A] via-transparent to-[#0A0E1A]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(47,230,168,0.08),transparent_55%)]" />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
-        <div className="text-center">
-          {/* Badge */}
+      <div className="relative mx-auto grid w-full max-w-7xl grid-cols-1 gap-16 px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
+        {/* Left: copy */}
+        <div>
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-4 py-2 mb-8 border border-white/20"
+            className="mb-8 inline-flex items-center gap-2 rounded-full border border-[#2E3548] bg-white/5 px-3.5 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-[#8FF5CE]"
           >
-            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-            <span className="text-white/90 text-sm">
-              AI-Powered Learning Paths
-            </span>
+            <Compass className="h-3.5 w-3.5" strokeWidth={1.75} />N 24&deg;
+            06&apos; &middot; job to roadmap
           </motion.div>
 
-          {/* Main Heading */}
           <motion.h1
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight"
+            transition={{ duration: 0.6, delay: 0.08 }}
+            className="font-display text-[clamp(2.75rem,6vw,4.75rem)] font-semibold leading-[0.98] tracking-tight text-[#EDF0E6]"
           >
-            Turn Any Job Post
+            Any job post,
             <br />
-            Into Your{" "}
-            <span className="bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
-              Learning Roadmap
-            </span>
+            plotted into a
+            <br />
+            <span className="text-[#2FE6A8]">route you can walk.</span>
           </motion.h1>
 
-          {/* Animated Text */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-xl md:text-2xl text-white/80 mb-8 h-12"
+            transition={{ duration: 0.6, delay: 0.18 }}
+            className="mt-7 h-8 font-mono text-base text-[#94A0B8] md:text-lg"
           >
             <TypeAnimation
               sequence={[
                 "Paste a job description...",
                 2000,
-                "Get instant skills breakdown...",
+                "Get an instant skills breakdown...",
                 2000,
-                "Follow your custom learning path...",
+                "Follow a waypoint-by-waypoint path...",
                 2000,
-                "Land your dream job! 🚀",
+                "Arrive at your next role.",
                 2000,
               ]}
               wrapper="span"
@@ -87,63 +122,106 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
             />
           </motion.div>
 
-          {/* CTA Buttons */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center mb-12"
+            transition={{ duration: 0.6, delay: 0.26 }}
+            className="mt-10 flex flex-col gap-4 sm:flex-row"
           >
             <button
               onClick={handleGetStarted}
-              className="group bg-white text-purple-600 px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl transition-all inline-flex items-center gap-2 transform hover:scale-105"
+              className="group inline-flex items-center justify-center gap-2 rounded-lg bg-[#2FE6A8] px-7 py-3.5 text-[15px] font-semibold text-[#08211A] transition-transform hover:scale-[1.02] active:scale-[0.99]"
             >
-              {user ? "Create Your Roadmap" : "Get Started Free"}
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              {user ? "Create your roadmap" : "Plot my roadmap"}
+              <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </button>
             <a
               href="#how-it-works"
-              className="group bg-white/10 backdrop-blur-md text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/20 transition-all inline-flex items-center gap-2 border border-white/20"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#2E3548] px-7 py-3.5 text-[15px] font-semibold text-[#EDF0E6] transition-colors hover:border-[#4A5470] hover:bg-white/5"
             >
-              <Play className="w-5 h-5" />
-              See How It Works
+              See the four waypoints
             </a>
           </motion.div>
 
-          {/* Stats */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.4 }}
-            className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-3xl mx-auto"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="mt-14 grid max-w-md grid-cols-3 gap-6 border-t border-[#1C2436] pt-6"
           >
             {[
-              { icon: Zap, label: "Instant Generation", value: "< 3 sec" },
-              { icon: Users, label: "Active Users", value: "10,000+" },
-              { icon: Globe, label: "Skills Covered", value: "500+" },
-            ].map((stat, i) => (
-              <div key={i} className="text-center">
-                <stat.icon className="w-6 h-6 text-white/60 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-white">
-                  {stat.value}
+              ["< 3 sec", "generation"],
+              ["10,000+", "hikers"],
+              ["500+", "skills mapped"],
+            ].map(([value, label]) => (
+              <div key={label}>
+                <div className="font-display text-xl font-semibold text-[#EDF0E6]">
+                  {value}
                 </div>
-                <div className="text-white/60 text-sm">{stat.label}</div>
+                <div className="mt-0.5 font-mono text-[11px] uppercase tracking-wide text-[#5C6884]">
+                  {label}
+                </div>
               </div>
             ))}
           </motion.div>
         </div>
+
+        {/* Right: 3D-tilted "map" panel with skill nodes lighting up */}
+        <motion.div
+          style={{ rotateX: mapRotate, y: mapY, opacity: fade }}
+          className="relative hidden aspect-[4/5] [perspective:1200px] lg:block"
+        >
+          <div className="relative h-full w-full rounded-2xl border border-[#232B40] bg-[#0D1220] p-6 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.7)]">
+            <div className="mb-5 flex items-center justify-between font-mono text-[11px] uppercase tracking-wide text-[#5C6884]">
+              <span>senior_frontend_engineer.json</span>
+              <span className="text-[#2FE6A8]">parsed</span>
+            </div>
+
+            <div className="relative h-[calc(100%-2.5rem)] w-full overflow-hidden rounded-lg border border-[#1C2436] bg-[radial-gradient(circle_at_20%_20%,rgba(47,230,168,0.06),transparent_50%)]">
+              <svg className="absolute inset-0 h-full w-full">
+                {SKILL_NODES.slice(1).map((node, i) => {
+                  const prev = SKILL_NODES[i];
+                  return (
+                    <motion.line
+                      key={node.label}
+                      x1={`${prev.x}%`}
+                      y1={`${prev.y}%`}
+                      x2={`${node.x}%`}
+                      y2={`${node.y}%`}
+                      stroke="#2FE6A8"
+                      strokeWidth="1.5"
+                      strokeDasharray="4 4"
+                      initial={{ pathLength: 0, opacity: 0 }}
+                      animate={{ pathLength: 1, opacity: 0.6 }}
+                      transition={{ duration: 0.6, delay: 0.6 + node.delay }}
+                    />
+                  );
+                })}
+              </svg>
+
+              {SKILL_NODES.map((node) => (
+                <motion.div
+                  key={node.label}
+                  initial={{ opacity: 0, scale: 0.4 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4, delay: 0.5 + node.delay }}
+                  className="absolute flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border border-[#2E3548] bg-[#141A2A] px-2.5 py-1"
+                  style={{ left: `${node.x}%`, top: `${node.y}%` }}
+                >
+                  <MapPin className="h-3 w-3 text-[#FFB648]" strokeWidth={2} />
+                  <span className="font-mono text-[11px] text-[#EDF0E6]">
+                    {node.label}
+                  </span>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
       </div>
 
-      {/* Scroll Indicator */}
-      <motion.div
-        animate={{ y: [0, 10, 0] }}
-        transition={{ duration: 2, repeat: Infinity }}
-        className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
-      >
-        <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
-          <div className="w-1.5 h-3 bg-white/50 rounded-full mt-2"></div>
-        </div>
-      </motion.div>
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 font-mono text-[11px] uppercase tracking-[0.2em] text-[#5C6884]">
+        scroll to begin the route
+      </div>
     </section>
   );
 }
