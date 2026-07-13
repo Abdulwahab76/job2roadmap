@@ -1,4 +1,3 @@
-// Skill requirement patterns for different tech stacks
 const TECH_PATTERNS = {
   frontend: {
     keywords: [
@@ -16,8 +15,11 @@ const TECH_PATTERNS = {
       "html",
       "css",
       "tailwind",
+      "responsive",
+      "interface",
+      "web",
     ],
-    minSkills: 2,
+    minSkills: 1, // 🎯 Reduced from 2
     category: "Frontend Development",
   },
   backend: {
@@ -36,8 +38,11 @@ const TECH_PATTERNS = {
       "java",
       "go",
       "rust",
+      "rest",
+      "graphql",
+      "microservices",
     ],
-    minSkills: 2,
+    minSkills: 1,
     category: "Backend Development",
   },
   fullstack: {
@@ -49,8 +54,10 @@ const TECH_PATTERNS = {
       "mevn",
       "frontend and backend",
       "front-end and back-end",
+      "web application",
+      "web app",
     ],
-    minSkills: 3,
+    minSkills: 1,
     category: "Full Stack Development",
   },
   devops: {
@@ -67,8 +74,9 @@ const TECH_PATTERNS = {
       "cloud",
       "linux",
       "deployment",
+      "server",
     ],
-    minSkills: 2,
+    minSkills: 1,
     category: "DevOps",
   },
   data: {
@@ -85,7 +93,7 @@ const TECH_PATTERNS = {
       "python",
       "analytics",
     ],
-    minSkills: 2,
+    minSkills: 1,
     category: "Data Science & AI",
   },
   mobile: {
@@ -99,8 +107,29 @@ const TECH_PATTERNS = {
       "mobile",
       "app development",
     ],
-    minSkills: 2,
+    minSkills: 1,
     category: "Mobile Development",
+  },
+  general: {
+    keywords: [
+      "developer",
+      "software",
+      "programmer",
+      "engineer",
+      "code",
+      "coding",
+      "programming",
+      "develop",
+      "web",
+      "application",
+      "website",
+      "database",
+      "test",
+      "debug",
+      "design",
+    ],
+    minSkills: 1,
+    category: "Software Development",
   },
 };
 
@@ -110,7 +139,7 @@ export type ValidationResult = {
   warnings: string[];
   detectedCategory: string | null;
   requiredSkills: string[];
-  confidence: number; // 0-100
+  confidence: number;
 };
 
 export function validateJobInput(jobDescription: string): ValidationResult {
@@ -150,71 +179,63 @@ export function validateJobInput(jobDescription: string): ValidationResult {
     }
   }
 
-  // Check 3: Category detection
-  if (!detectedCategory) {
-    errors.push(
-      "Could not identify a tech role. Include specific technologies (e.g., React, Python, AWS)."
+  // 🎯 FIX: Generic descriptions ke liye "general" category
+  if (!detectedCategory || maxMatches === 0) {
+    // Check general keywords
+    const generalMatches = TECH_PATTERNS.general.keywords.filter((keyword) =>
+      lowerDesc.includes(keyword.toLowerCase())
     );
-    return {
-      isValid: false,
-      errors,
-      warnings,
-      detectedCategory: null,
-      requiredSkills: [],
-      confidence: 0,
-    };
+
+    if (generalMatches.length > 0) {
+      detectedCategory = TECH_PATTERNS.general.category;
+      requiredSkills = generalMatches;
+      maxMatches = generalMatches.length;
+      warnings.push(
+        "Generic job description detected. AI will infer specific skills."
+      );
+    } else {
+      // 🎯 Even if nothing matches, allow it (AI will handle)
+      detectedCategory = "Software Development";
+      requiredSkills = ["web development"];
+      warnings.push(
+        "No specific skills detected. AI will analyze and suggest skills."
+      );
+    }
   }
 
-  // Check 4: Minimum skills requirement
+  // Check 3: Minimum skills requirement (REDUCED)
   const pattern = Object.values(TECH_PATTERNS).find(
     (p) => p.category === detectedCategory
   );
-  const minSkills = pattern?.minSkills || 2;
+  const minSkills = pattern?.minSkills || 1; // 🎯 Changed to 1 minimum
 
+  // 🎯 FIX: Agar koi skills nahi mili, phir bhi allow karo
   if (requiredSkills.length < minSkills) {
-    errors.push(
-      `Not enough technical skills detected. Found ${requiredSkills.length}, need at least ${minSkills}.`
+    // Instead of error, just warn
+    warnings.push(
+      `Limited skills detected. AI will infer appropriate learning path.`
     );
+    // Add generic skill
+    requiredSkills.push("software development");
   }
 
-  // Check 5: Confidence score
-  const confidence = Math.min(100, (requiredSkills.length / minSkills) * 100);
+  // Check 4: Confidence score
+  const confidence = Math.min(
+    100,
+    Math.max(30, (requiredSkills.length / 2) * 100)
+  );
 
-  // Check 6: Warnings
+  // Check 5: Warnings for short descriptions
   if (lowerDesc.length < 100) {
     warnings.push(
-      "Short description may miss important details. Consider adding more requirements."
+      "Short description. Consider adding more details for better results."
     );
   }
 
-  if (requiredSkills.length < 3) {
-    warnings.push(
-      "Limited skills detected. A more detailed job description gives better roadmaps."
-    );
-  }
-
-  // Check 7: Contains only company name or generic text
-  const genericWords = [
-    "company",
-    "looking for",
-    "seeking",
-    "hiring",
-    "join",
-    "team",
-  ];
-  const hasSpecificTech =
-    TECH_PATTERNS.frontend.keywords.some((k) => lowerDesc.includes(k)) ||
-    TECH_PATTERNS.backend.keywords.some((k) => lowerDesc.includes(k));
-
-  if (!hasSpecificTech && lowerDesc.length < 200) {
-    errors.push(
-      "No specific technologies mentioned. Include technical skills like React, Python, Docker, etc."
-    );
-  }
-
+  // 🎯 ALWAYS valid now - AI handle karega
   return {
-    isValid: errors.length === 0,
-    errors,
+    isValid: true, // 🎯 Always true - let AI decide
+    errors: [],
     warnings,
     detectedCategory,
     requiredSkills,
@@ -233,7 +254,6 @@ export function analyzeInput(text: string): {
   const suggestions: string[] = [];
   let category: string | null = null;
 
-  // Count detected skills
   for (const pattern of Object.values(TECH_PATTERNS)) {
     const matches = pattern.keywords.filter((k) => lowerText.includes(k));
     if (matches.length > 0) {
@@ -242,13 +262,17 @@ export function analyzeInput(text: string): {
     }
   }
 
-  // Generate suggestions based on partial input
-  if (lowerText.includes("react")) {
-    suggestions.push("Add: TypeScript, Next.js, Redux, Testing");
-  } else if (lowerText.includes("python")) {
-    suggestions.push("Add: Django, Flask, FastAPI, PostgreSQL");
-  } else if (lowerText.includes("node")) {
-    suggestions.push("Add: Express, MongoDB, TypeScript, GraphQL");
+  // 🎯 Better suggestions
+  if (lowerText.includes("frontend") || lowerText.includes("ui")) {
+    suggestions.push("Include: React, TypeScript, CSS frameworks");
+  } else if (lowerText.includes("backend") || lowerText.includes("api")) {
+    suggestions.push("Include: Node.js, Python, Database names");
+  } else if (lowerText.includes("full") || lowerText.includes("web")) {
+    suggestions.push("Include: MERN stack, specific technologies");
+  } else if (skillCount === 0) {
+    suggestions.push(
+      "Add specific skills like React, Python, AWS, etc. for better results"
+    );
   }
 
   return { skillCount, suggestions, category };

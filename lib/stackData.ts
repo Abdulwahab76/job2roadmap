@@ -1,0 +1,123 @@
+// 🎯 ALL AVAILABLE STACKS (for dynamic filtering)
+export const ALL_STACKS = [
+  {
+    name: "MERN Stack",
+    desc: "MongoDB + Express + React + Node.js",
+    icon: "🟢",
+    keywords: ["mern", "mongodb", "express", "react", "node"],
+  },
+  {
+    name: "React Frontend",
+    desc: "React + TypeScript + Next.js",
+    icon: "⚛️",
+    keywords: ["react", "frontend", "next", "typescript", "ui"],
+  },
+  {
+    name: "Python Backend",
+    desc: "Python + Django + PostgreSQL",
+    icon: "🐍",
+    keywords: ["python", "django", "flask", "fastapi", "backend"],
+  },
+  {
+    name: "DevOps Engineer",
+    desc: "Docker + AWS + CI/CD",
+    icon: "🚀",
+    keywords: ["devops", "docker", "aws", "kubernetes", "ci/cd", "cloud"],
+  },
+  {
+    name: "Data Scientist",
+    desc: "Python + ML + Pandas",
+    icon: "📊",
+    keywords: ["data", "machine learning", "ml", "ai", "python", "pandas"],
+  },
+  {
+    name: "Mobile Developer",
+    desc: "React Native + iOS + Android",
+    icon: "📱",
+    keywords: ["mobile", "react native", "flutter", "ios", "android"],
+  },
+  {
+    name: "WordPress Developer",
+    desc: "WordPress + PHP + WooCommerce",
+    icon: "📝",
+    keywords: ["wordpress", "php", "woocommerce", "cms", "theme"],
+  },
+  {
+    name: "Vue.js Developer",
+    desc: "Vue.js + Nuxt + Pinia",
+    icon: "💚",
+    keywords: ["vue", "nuxt", "pinia", "frontend"],
+  },
+  {
+    name: "Angular Developer",
+    desc: "Angular + TypeScript + RxJS",
+    icon: "🔴",
+    keywords: ["angular", "rxjs", "ngrx", "typescript"],
+  },
+  {
+    name: "Go Backend",
+    desc: "Go + Gin + PostgreSQL",
+    icon: "🔵",
+    keywords: ["go", "golang", "gin", "backend", "api"],
+  },
+  {
+    name: "Java Spring Boot",
+    desc: "Java + Spring + Microservices",
+    icon: "☕",
+    keywords: ["java", "spring", "spring boot", "hibernate", "jpa"],
+  },
+  {
+    name: "UI/UX Designer",
+    desc: "Figma + Design Systems + Prototyping",
+    icon: "🎨",
+    keywords: ["ui", "ux", "figma", "design", "adobe xd", "prototype"],
+  },
+  {
+    name: "Full Stack .NET",
+    desc: "C# + ASP.NET + SQL Server",
+    icon: "💜",
+    keywords: [".net", "c#", "asp.net", "sql server", "azure"],
+  },
+  {
+    name: "Flutter Developer",
+    desc: "Flutter + Dart + Firebase",
+    icon: "💙",
+    keywords: ["flutter", "dart", "firebase", "mobile", "cross platform"],
+  },
+  {
+    name: "Blockchain Developer",
+    desc: "Solidity + Web3 + Ethereum",
+    icon: "⛓️",
+    keywords: ["blockchain", "solidity", "web3", "ethereum", "smart contract"],
+  },
+  {
+    name: "Cybersecurity Analyst",
+    desc: "Security + Networking + Ethical Hacking",
+    icon: "🛡️",
+    keywords: ["security", "cyber", "hacking", "penetration", "network"],
+  },
+  {
+    name: "AWS Cloud Engineer",
+    desc: "AWS + Lambda + S3 + EC2",
+    icon: "☁️",
+    keywords: ["aws", "amazon", "lambda", "s3", "ec2", "cloud"],
+  },
+  {
+    name: "Game Developer",
+    desc: "Unity + C# + 3D Modeling",
+    icon: "🎮",
+    keywords: ["game", "unity", "unreal", "c#", "3d", "animation"],
+  },
+  {
+    name: "SEO Specialist",
+    desc: "SEO + Google Analytics + Content",
+    icon: "🔍",
+    keywords: ["seo", "google analytics", "sem", "content", "ranking"],
+  },
+  {
+    name: "Tech Lead",
+    desc: "System Design + Architecture + Leadership",
+    icon: "👑",
+    keywords: ["lead", "architect", "system design", "management", "team lead"],
+  },
+];

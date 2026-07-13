@@ -20,13 +20,24 @@ export async function POST(request: Request) {
     console.log("👤 User:", userId || "anonymous");
     console.log("🎮 Mode:", mode);
 
-    // Validate input
+    // 🎯 Validate but don't reject - sirf warnings do
     const validation = validateJobInput(jobDescription);
-    if (!validation.isValid) {
+
+    // 🎯 FIX: Sirf length check mein reject karo
+    if (jobDescription.trim().length < 20) {
       return NextResponse.json(
-        { success: false, error: validation.errors.join(" ") },
+        {
+          success: false,
+          error:
+            "Description too short. Please provide at least 20 characters.",
+        },
         { status: 400 }
       );
+    }
+
+    // Warnings log karo but allow karo
+    if (validation.warnings.length > 0) {
+      console.log("⚠️ Warnings:", validation.warnings);
     }
 
     let skills: any = null;
@@ -40,7 +51,6 @@ export async function POST(request: Request) {
 
       if (localTemplate) {
         console.log("✅ LOCAL MATCH:", localTemplate.title);
-        console.log("💰 Tokens: 0 | API Calls: 0");
         skills = extractSkillsFromTemplate(localTemplate);
         roadmap = {
           title: localTemplate.title,
@@ -54,14 +64,13 @@ export async function POST(request: Request) {
       }
     }
 
-    // 🎯 LAYER 2: CACHE CHECK (0 tokens) - Only if no local match
+    // 🎯 LAYER 2: CACHE CHECK (0 tokens)
     if (!roadmap && mode !== "ai-only") {
       console.log("🔍 LAYER 2: Checking cache...");
       const cached = await checkCache(jobDescription);
 
       if (cached) {
         console.log("✅ CACHE HIT!");
-        console.log("💰 Tokens: 0 | API Calls: 0");
         skills = cached.skills;
         roadmap = cached.roadmap;
         source = "cache";
@@ -70,14 +79,13 @@ export async function POST(request: Request) {
       }
     }
 
-    // 🎯 LAYER 3: AI GENERATION (minimal tokens) - Only if no match
+    // 🎯 LAYER 3: AI GENERATION (Smart handling)
     if (!roadmap && (mode === "auto" || mode === "ai-only")) {
       console.log("🤖 LAYER 3: AI generation needed");
 
       // Check usage limits
       const usageCheck = canGenerate(isAuthenticated);
       if (!usageCheck.canGenerate) {
-        console.log("❌ Usage limit reached");
         return NextResponse.json(
           {
             success: false,
@@ -88,40 +96,48 @@ export async function POST(request: Request) {
         );
       }
 
-      // Generate with OPTIMIZED prompts
-      console.log("📡 Calling Gemini API...");
-      skills = await extractSkillsFromJob(jobDescription);
-      roadmap = await generateLearningRoadmap(skills);
-      source = "ai";
+      // 🎯 Smart generation with fallback
+      try {
+        console.log("📡 Calling Gemini API...");
+        skills = await extractSkillsFromJob(jobDescription);
+        roadmap = await generateLearningRoadmap(skills);
+        source = "ai";
 
-      // Track usage
-      incrementUsage(isAuthenticated);
+        // Track usage
+        incrementUsage(isAuthenticated);
 
-      // Save to cache for future (FREE next time!)
-      console.log("💾 Saving to cache...");
-      await saveToCache(jobDescription, skills, roadmap, "ai");
-      console.log("✅ Cached for future (next time FREE)");
+        // Save to cache
+        await saveToCache(jobDescription, skills, roadmap, "ai");
+        console.log("✅ Cached for future");
+      } catch (aiError: any) {
+        console.error("❌ AI failed:", aiError.message);
+        console.log("⚠️ Using fallback roadmap");
+
+        // 🎯 FALLBACK: Return basic roadmap if AI fails
+        skills = {
+          jobTitle: "Software Developer",
+          requiredSkills: ["HTML", "CSS", "JavaScript", "Git"],
+          experienceLevel: "beginner",
+        };
+        roadmap = generateFallbackRoadmap();
+        source = "ai";
+      }
     }
 
-    // 🎯 If still no roadmap (local-only mode with no match)
     if (!roadmap) {
-      console.log("❌ No roadmap generated");
       return NextResponse.json(
         {
           success: false,
-          error:
-            "No matching roadmap found. Try AI mode or use different keywords.",
-          noLocalMatch: true,
+          error: "Unable to generate roadmap. Please try again.",
         },
-        { status: 404 }
+        { status: 500 }
       );
     }
 
-    // 🎯 Save to user's roadmaps (if authenticated)
+    // Save to user account
     let savedId = null;
     if (isAuthenticated && userId) {
       try {
-        console.log("💾 Saving to user account...");
         const saved = await saveRoadmap({
           userId,
           title: roadmap.title,
@@ -137,16 +153,7 @@ export async function POST(request: Request) {
       }
     }
 
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("📊 RESULT:", {
-      source,
-      phases: roadmap.phases?.length,
-      topics: roadmap.phases?.reduce(
-        (acc: number, p: any) => acc + p.topics.length,
-        0
-      ),
-      tokensSaved: source !== "ai" ? "100%" : "0%",
-    });
+    console.log("📊 RESULT:", { source, phases: roadmap.phases?.length });
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     return NextResponse.json({
@@ -155,15 +162,156 @@ export async function POST(request: Request) {
       skills,
       roadmap,
       savedId,
+      validation, // Warnings bhi bhejo
     });
   } catch (error: any) {
-    console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.error("❌ FATAL ERROR:", error.message);
-    console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━");
-
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to generate roadmap" },
+      { success: false, error: error.message },
       { status: 500 }
     );
   }
+}
+
+// 🎯 Fallback roadmap generator
+function generateFallbackRoadmap(): any {
+  return {
+    title: "Software Developer Learning Roadmap",
+    difficulty: "beginner",
+    estimatedDays: 60,
+    phases: [
+      {
+        phaseTitle: "Phase 1: Programming Fundamentals (3 weeks)",
+        duration: "3 weeks",
+        topics: [
+          {
+            title: "HTML, CSS & JavaScript",
+            description: "Master the core building blocks of the web",
+            resources: [
+              {
+                name: "freeCodeCamp",
+                url: "https://www.freecodecamp.org/",
+                type: "course",
+                isFree: true,
+              },
+              {
+                name: "The Odin Project",
+                url: "https://www.theodinproject.com/",
+                type: "course",
+                isFree: true,
+              },
+            ],
+            project: "Build a personal portfolio website",
+          },
+          {
+            title: "Version Control with Git & GitHub",
+            description: "Learn essential version control for collaboration",
+            resources: [
+              {
+                name: "GitHub Skills",
+                url: "https://skills.github.com/",
+                type: "interactive",
+                isFree: true,
+              },
+              {
+                name: "Git Handbook",
+                url: "https://guides.github.com/introduction/git-handbook/",
+                type: "documentation",
+                isFree: true,
+              },
+            ],
+            project: "Push your projects to GitHub",
+          },
+        ],
+      },
+      {
+        phaseTitle: "Phase 2: Frontend Development (4 weeks)",
+        duration: "4 weeks",
+        topics: [
+          {
+            title: "React.js Fundamentals",
+            description: "Learn the most popular frontend framework",
+            resources: [
+              {
+                name: "React Official Docs",
+                url: "https://react.dev/learn",
+                type: "documentation",
+                isFree: true,
+              },
+              {
+                name: "Scrimba React Course",
+                url: "https://scrimba.com/learn/learnreact",
+                type: "course",
+                isFree: true,
+              },
+            ],
+            project: "Build a task management application",
+          },
+          {
+            title: "CSS Frameworks & Responsive Design",
+            description: "Create beautiful, mobile-friendly interfaces",
+            resources: [
+              {
+                name: "TailwindCSS Docs",
+                url: "https://tailwindcss.com/docs",
+                type: "documentation",
+                isFree: true,
+              },
+              {
+                name: "CSS Grid Garden",
+                url: "https://cssgridgarden.com/",
+                type: "interactive",
+                isFree: true,
+              },
+            ],
+            project: "Style your app with TailwindCSS",
+          },
+        ],
+      },
+      {
+        phaseTitle: "Phase 3: Backend & APIs (4 weeks)",
+        duration: "4 weeks",
+        topics: [
+          {
+            title: "Node.js & REST APIs",
+            description: "Build server-side applications and APIs",
+            resources: [
+              {
+                name: "Node.js Docs",
+                url: "https://nodejs.org/en/docs/",
+                type: "documentation",
+                isFree: true,
+              },
+              {
+                name: "Express.js Guide",
+                url: "https://expressjs.com/en/guide/routing.html",
+                type: "documentation",
+                isFree: true,
+              },
+            ],
+            project: "Create a REST API for your app",
+          },
+          {
+            title: "Database Fundamentals",
+            description: "Learn SQL and database design principles",
+            resources: [
+              {
+                name: "SQL Tutorial",
+                url: "https://www.sqltutorial.org/",
+                type: "tutorial",
+                isFree: true,
+              },
+              {
+                name: "PostgreSQL Docs",
+                url: "https://www.postgresql.org/docs/",
+                type: "documentation",
+                isFree: true,
+              },
+            ],
+            project: "Connect database to your API",
+          },
+        ],
+      },
+    ],
+  };
 }
