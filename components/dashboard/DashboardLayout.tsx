@@ -25,7 +25,7 @@ import {
 
 const sidebarLinks = [
   { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
-  { icon: PlusCircle, label: "Create Roadmap", href: "/create" },
+  // { icon: PlusCircle, label: "Create Roadmap", href: "/create" },
   { icon: BookOpen, label: "My Roadmaps", href: "/dashboard/roadmaps" },
   { icon: TrendingUp, label: "Progress", href: "/dashboard/progress" },
   { icon: Star, label: "Saved Jobs", href: "/dashboard/saved" },
