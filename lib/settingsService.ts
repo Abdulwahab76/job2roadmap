@@ -1,3 +1,4 @@
+import { decrypt, encrypt } from "./encryption";
 import { supabase } from "./supabase";
 
 export type UserSettings = {
@@ -227,27 +228,68 @@ export async function getUserAPIKeys(userId: string): Promise<any[]> {
   }
 }
 
+export async function addUserAPIKey(
+  userId: string,
+  name: string,
+  apiKey: string
+) {
+  const encrypted = encrypt(apiKey);
+
+  await supabase.from("user_api_keys").insert({
+    user_id: userId,
+    name: name, // e.g., "My Gemini Key"
+    api_key_encrypted: encrypted, // Encrypted
+    provider: "gemini",
+    is_active: true,
+  });
+}
+
+export async function getUserActiveAPIKey(
+  userId: string
+): Promise<string | null> {
+  const { data } = await supabase
+    .from("user_api_keys")
+    .select("api_key_encrypted")
+    .eq("user_id", userId)
+    .eq("provider", "gemini")
+    .eq("is_active", true)
+    .is("revoked_at", null)
+    .single();
+
+  if (!data?.api_key_encrypted) return null;
+
+  return decrypt(data.api_key_encrypted); // Decrypt and return
+}
+
 // Create API key
-export async function createAPIKey(userId: string, name: string): Promise<any> {
-  try {
-    const apiKey = `j2r_${generateRandomString(32)}`;
+export async function createAPIKey(
+  userId: string,
+  name: string,
+  rawApiKey: string
+) {
+  // 🎯 Encrypt the key before saving
+  const encrypted = encrypt(rawApiKey);
 
-    const { data, error } = await supabase
-      .from("user_api_keys")
-      .insert({
-        user_id: userId,
-        api_key: apiKey,
-        name: name,
-      })
-      .select()
-      .single();
+  console.log("🔐 Encrypting key...");
+  console.log("Original:", rawApiKey.substring(0, 10) + "...");
+  console.log("Encrypted:", encrypted.substring(0, 20) + "...");
 
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error("Error creating API key:", error);
-    throw error;
-  }
+  const { data, error } = await supabase
+    .from("user_api_keys")
+    .insert({
+      user_id: userId,
+      name: name,
+      api_key_encrypted: encrypted, // ← Store ENCRYPTED!
+      provider: "gemini",
+      is_active: true,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  console.log("✅ Key saved (encrypted)");
+  return data;
 }
 
 // Revoke API key
@@ -281,14 +323,4 @@ export async function deleteAccount(userId: string): Promise<void> {
     console.error("Error deleting account:", error);
     throw error;
   }
-}
-
-function generateRandomString(length: number): string {
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let result = "";
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
 }

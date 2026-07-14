@@ -1,15 +1,123 @@
 import { GoogleGenAI } from "@google/genai";
+import { decrypt } from "./encryption";
+import { supabase } from "./supabase";
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY!,
-});
+// ──────────────────────────────────────────────
+// 🎯 Get user's custom API key (if exists)
+// ──────────────────────────────────────────────
+async function getUserAPIKey(userId: string): Promise<string | null> {
+  try {
+    console.log("🔍 Looking for user API key...");
 
-// 🎯 Extract potential tech stack from generic description
+    const { data, error } = await supabase
+      .from("user_api_keys")
+      .select("api_key")
+      .eq("user_id", userId)
+      .eq("provider", "gemini")
+      .eq("is_active", true)
+      .is("revoked_at", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error) {
+      console.log("❌ Query error:", error.message);
+      return null;
+    }
+
+    if (!data?.api_key) {
+      console.log("❌ No API key found");
+      return null;
+    }
+
+    const key = data.api_key;
+    console.log("📝 Key from DB starts with:", key.substring(0, 10) + "...");
+
+    return data.api_key;
+  } catch (e: any) {
+    console.error("❌ Error:", e.message);
+    return null;
+  }
+}
+
+// ──────────────────────────────────────────────
+// 🎯 Track usage count
+// ──────────────────────────────────────────────
+async function incrementUsage(userId: string): Promise<void> {
+  try {
+    // Get current count
+    const { data } = await supabase
+      .from("user_api_keys")
+      .select("usage_count")
+      .eq("user_id", userId)
+      .eq("provider", "gemini")
+      .eq("is_active", true)
+      .is("revoked_at", null)
+      .single();
+
+    const newCount = (data?.usage_count || 0) + 1;
+
+    await supabase
+      .from("user_api_keys")
+      .update({ usage_count: newCount, last_used: new Date().toISOString() })
+      .eq("user_id", userId)
+      .eq("provider", "gemini")
+      .eq("is_active", true)
+      .is("revoked_at", null);
+  } catch {
+    // Silently fail - usage tracking shouldn't block generation
+  }
+}
+
+// ──────────────────────────────────────────────
+// 🎯 Create AI instance (User key → App key fallback)
+// ──────────────────────────────────────────────
+async function createAIClient(userId?: string): Promise<{
+  ai: GoogleGenAI;
+  keySource: "user" | "app";
+}> {
+  // 🎯 Default: Use app key as fallback
+  let apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY!;
+  let keySource: "user" | "app" = "app";
+
+  if (userId) {
+    console.log("🔍 Checking for user API key...");
+    const userKey = await getUserAPIKey(userId);
+
+    if (userKey) {
+      // ✅ User key mili - use this instead
+      apiKey = userKey;
+      keySource = "user";
+      console.log("🔑 Using USER API key! 💰 FREE!");
+      console.log("🔑 Key starts with:", apiKey.substring(0, 15) + "...");
+    } else {
+      // ❌ No user key - keep app key
+      console.log("📡 No user key found, using APP key");
+      console.log("🔑 App key starts with:", apiKey.substring(0, 15) + "...");
+    }
+  } else {
+    console.log("📡 No userId, using APP key");
+  }
+
+  // 🎯 Safety check
+  if (!apiKey) {
+    console.error("❌ NO API KEY AVAILABLE!");
+    throw new Error("No API key configured");
+  }
+
+  return {
+    ai: new GoogleGenAI({ apiKey }),
+    keySource,
+  };
+}
+
+// ──────────────────────────────────────────────
+// 🎯 Infer tech stack from generic descriptions
+// ──────────────────────────────────────────────
 function inferTechStack(text: string): string {
   const lower = text.toLowerCase();
   const inferred: string[] = [];
 
-  // Check for keywords and infer related stack
   if (
     lower.includes("frontend") ||
     lower.includes("ui") ||
@@ -41,7 +149,6 @@ function inferTechStack(text: string): string {
     inferred.push("Git", "GitHub", "Code Review");
   }
 
-  // If nothing inferred, add common web dev stack
   if (inferred.length === 0) {
     inferred.push("HTML", "CSS", "JavaScript", "React", "Git");
   }
@@ -49,231 +156,106 @@ function inferTechStack(text: string): string {
   return inferred.join(", ");
 }
 
-// 🎯 Smart skill extraction with fallback
-export async function extractSkillsFromJob(jobDescription: string) {
-  // Infer tech stack if generic
-  const inferredStack = inferTechStack(jobDescription);
-
-  const prompt = `Analyze this job description and extract required technical skills.
-  
-  Job: ${jobDescription.substring(0, 800)}
-  Hint: This appears to be a ${inferredStack} related role.
-  
-  Return ONLY JSON:
-  {
-    "jobTitle": "extracted or inferred job title",
-    "requiredSkills": ["skill1", "skill2", ...],
-    "niceToHaveSkills": ["skill1", ...],
-    "experienceLevel": "beginner/intermediate/advanced"
-  }`;
-
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: prompt,
-      config: {
-        maxOutputTokens: 200,
-        temperature: 0.3,
-      },
-    });
-
-    const text = response.text as string;
-    return parseJSON(text);
-  } catch (error: any) {
-    console.error("❌ Gemini Error:", error.message);
-
-    // 🎯 FALLBACK: Return inferred skills if AI fails
-    console.log("⚠️ Using inferred skills as fallback");
-    return {
-      jobTitle: "Web Developer",
-      requiredSkills: inferredStack.split(", "),
-      niceToHaveSkills: ["TypeScript", "Docker", "AWS"],
-      experienceLevel: "beginner",
-    };
-  }
-}
-
-// 🎯 Smart roadmap generation with error handling
-export async function generateLearningRoadmap(skills: any) {
-  const minimalSkills = {
-    title: skills.jobTitle || "Web Developer",
-    skills: (skills.requiredSkills || []).slice(0, 6).join(", "),
-    level: skills.experienceLevel || "beginner",
-  };
-
-  const prompt = `Create a 3-phase learning roadmap for: ${JSON.stringify(
-    minimalSkills
-  )}.
-  Each phase: 2-3 topics with 2 free resources each.
-  Return ONLY JSON with phases array.`;
-
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: prompt,
-      config: {
-        maxOutputTokens: 600,
-        temperature: 0.5,
-      },
-    });
-
-    const text = response.text as string;
-    return parseJSON(text);
-  } catch (error: any) {
-    console.error("❌ Gemini Error:", error.message);
-
-    // 🎯 FALLBACK: Return generic roadmap
-    console.log("⚠️ Using generic roadmap as fallback");
-    return {
-      title: `${skills.jobTitle || "Web Developer"} Roadmap`,
-      difficulty: skills.experienceLevel || "beginner",
-      estimatedDays: 60,
-      phases: [
-        {
-          phaseTitle: "Phase 1: Fundamentals",
-          duration: "3 weeks",
-          topics: [
-            {
-              title: "HTML, CSS & JavaScript Basics",
-              description: "Master the core web technologies",
-              resources: [
-                {
-                  name: "freeCodeCamp",
-                  url: "https://www.freecodecamp.org/",
-                  type: "course",
-                  isFree: true,
-                },
-                {
-                  name: "MDN Web Docs",
-                  url: "https://developer.mozilla.org/",
-                  type: "documentation",
-                  isFree: true,
-                },
-              ],
-              project: "Build a personal portfolio website",
-            },
-            {
-              title: "Version Control with Git",
-              description: "Learn Git basics and GitHub workflow",
-              resources: [
-                {
-                  name: "GitHub Learning Lab",
-                  url: "https://github.com/apps/github-learning-lab",
-                  type: "course",
-                  isFree: true,
-                },
-                {
-                  name: "Git Handbook",
-                  url: "https://guides.github.com/introduction/git-handbook/",
-                  type: "documentation",
-                  isFree: true,
-                },
-              ],
-              project: "Push your portfolio to GitHub",
-            },
-          ],
-        },
-        {
-          phaseTitle: "Phase 2: Frontend Development",
-          duration: "4 weeks",
-          topics: [
-            {
-              title: "React.js Fundamentals",
-              description: "Learn components, state, props, and hooks",
-              resources: [
-                {
-                  name: "React Official Tutorial",
-                  url: "https://react.dev/learn",
-                  type: "documentation",
-                  isFree: true,
-                },
-                {
-                  name: "Net Ninja React Playlist",
-                  url: "https://youtube.com/playlist?list=PL4cUxeGkcC9gZD-Tvwfod2gaISzfRiP9d",
-                  type: "video",
-                  isFree: true,
-                },
-              ],
-              project: "Build a task management app",
-            },
-            {
-              title: "Responsive Design & CSS Frameworks",
-              description: "Master responsive layouts and TailwindCSS",
-              resources: [
-                {
-                  name: "TailwindCSS Docs",
-                  url: "https://tailwindcss.com/docs",
-                  type: "documentation",
-                  isFree: true,
-                },
-                {
-                  name: "CSS Tricks",
-                  url: "https://css-tricks.com/",
-                  type: "documentation",
-                  isFree: true,
-                },
-              ],
-              project: "Make your app responsive",
-            },
-          ],
-        },
-        {
-          phaseTitle: "Phase 3: Backend & Database",
-          duration: "4 weeks",
-          topics: [
-            {
-              title: "Node.js & Express",
-              description: "Build RESTful APIs with Node.js",
-              resources: [
-                {
-                  name: "Node.js Official Docs",
-                  url: "https://nodejs.org/en/docs/",
-                  type: "documentation",
-                  isFree: true,
-                },
-                {
-                  name: "Express.js Guide",
-                  url: "https://expressjs.com/en/guide/routing.html",
-                  type: "documentation",
-                  isFree: true,
-                },
-              ],
-              project: "Create API for your app",
-            },
-            {
-              title: "Database Fundamentals",
-              description: "Learn SQL and database design",
-              resources: [
-                {
-                  name: "PostgreSQL Tutorial",
-                  url: "https://www.postgresqltutorial.com/",
-                  type: "tutorial",
-                  isFree: true,
-                },
-                {
-                  name: "MongoDB University",
-                  url: "https://learn.mongodb.com/",
-                  type: "course",
-                  isFree: true,
-                },
-              ],
-              project: "Connect database to your API",
-            },
-          ],
-        },
-      ],
-    };
-  }
-}
-
-// JSON parser
+// ──────────────────────────────────────────────
+// 🎯 JSON Parser
+// ──────────────────────────────────────────────
 function parseJSON(text: string): any {
+  const clean = text.replace(/```json\n?|\n?```/g, "").trim();
+  const match = clean.match(/\{[\s\S]*\}/);
+  return JSON.parse(match ? match[0] : clean);
+}
+
+// ──────────────────────────────────────────────
+// 🎯 Fallback Roadmap (when everything fails)
+// ──────────────────────────────────────────────
+
+// ──────────────────────────────────────────────
+// 🎯 ONE SHOT: Extract skills + Generate roadmap
+// ──────────────────────────────────────────────
+export async function generateRoadmapInOneShot(
+  jobDescription: string,
+  userId?: string
+): Promise<{ skills: any; roadmap: any; keySource: string }> {
+  const { ai, keySource } = await createAIClient(userId);
+
   try {
-    const clean = text.replace(/```json\n?|\n?```/g, "").trim();
-    const match = clean.match(/\{[\s\S]*\}/);
-    return JSON.parse(match ? match[0] : clean);
-  } catch (error) {
-    console.error("JSON parse error:", text.substring(0, 200));
-    throw new Error("Failed to parse AI response");
+    const prompt = `Create a 3-phase learning roadmap for: ${jobDescription.substring(
+      0,
+      400
+    )}. Return JSON with phases array.`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: prompt,
+      config: { maxOutputTokens: 500, temperature: 0.3 },
+    });
+
+    const text = response.text as string;
+    const data = parseJSON(text);
+
+    return {
+      skills: {
+        jobTitle: data.title || "Developer",
+        requiredSkills: data.skills || [],
+        experienceLevel: "intermediate",
+      },
+      roadmap: {
+        title: data.title || "Learning Roadmap",
+        difficulty: "intermediate",
+        estimatedDays: 60,
+        phases: data.phases || [],
+      },
+      keySource,
+    };
+  } catch (error: any) {
+    console.error("❌ AI failed:", error.message);
+
+    return {
+      skills: {
+        jobTitle: "Developer",
+        requiredSkills: ["HTML", "CSS", "JavaScript"],
+        experienceLevel: "beginner",
+      },
+      roadmap: {
+        title: "Developer Roadmap",
+        difficulty: "beginner",
+        estimatedDays: 45,
+        phases: [
+          {
+            phaseTitle: "Phase 1: Fundamentals",
+            duration: "2 weeks",
+            topics: [
+              {
+                title: "Web Basics",
+                description: "Learn HTML, CSS, JavaScript",
+                resources: [
+                  {
+                    name: "freeCodeCamp",
+                    url: "https://www.freecodecamp.org/",
+                    type: "course",
+                    isFree: true,
+                  },
+                ],
+                project: "Build a portfolio",
+              },
+            ],
+          },
+        ],
+      },
+      keySource: "local",
+    };
   }
+}
+
+// ──────────────────────────────────────────────
+// 🎯 Legacy exports (for backward compatibility)
+// ──────────────────────────────────────────────
+export async function extractSkillsFromJob(jobDescription: string) {
+  const result = await generateRoadmapInOneShot(jobDescription);
+  return result.skills;
+}
+
+export async function generateLearningRoadmap(skills: any) {
+  const result = await generateRoadmapInOneShot(skills.jobTitle || "Developer");
+  return result.roadmap;
 }

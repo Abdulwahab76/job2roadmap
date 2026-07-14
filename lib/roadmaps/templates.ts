@@ -276,113 +276,113 @@ export const ROADMAP_TEMPLATES: RoadmapTemplate[] = [
   // =============================================
   // 3. PYTHON BACKEND
   // =============================================
-  {
-    id: "python-backend",
-    title: "Python Backend Developer Roadmap",
-    keywords: [
-      "python",
-      "django",
-      "flask",
-      "fastapi",
-      "backend",
-      "api",
-      "sql",
-      "postgresql",
-    ],
-    difficulty: "intermediate",
-    estimatedDays: 75,
-    phases: [
-      {
-        phaseTitle: "Phase 1: Python Fundamentals (2 weeks)",
-        duration: "2 weeks",
-        topics: [
-          {
-            title: "Python Basics & OOP",
-            description:
-              "Data types, functions, classes, inheritance, decorators",
-            resources: [
-              {
-                name: "Python.org Tutorial",
-                url: "https://docs.python.org/3/tutorial/",
-                type: "documentation",
-                isFree: true,
-              },
-              {
-                name: "Corey Schafer Python",
-                url: "https://youtube.com/playlist?list=PL-osiE80TeTt2d9bfVyTiXJA-UTHn6WwU",
-                type: "video",
-                isFree: true,
-              },
-            ],
-            project: "Build a CLI task manager",
-          },
-          {
-            title: "Advanced Python",
-            description: "Generators, context managers, async/await",
-            resources: [
-              {
-                name: "Real Python",
-                url: "https://realpython.com/",
-                type: "tutorial",
-                isFree: true,
-              },
-              {
-                name: "Python Type Hints",
-                url: "https://mypy.readthedocs.io/",
-                type: "documentation",
-                isFree: true,
-              },
-            ],
-            project: "Build an async web scraper",
-          },
-        ],
-      },
-      {
-        phaseTitle: "Phase 2: Web Frameworks (4 weeks)",
-        duration: "4 weeks",
-        topics: [
-          {
-            title: "Django Framework",
-            description: "MVT architecture, ORM, admin panel, auth",
-            resources: [
-              {
-                name: "Django Girls Tutorial",
-                url: "https://tutorial.djangogirls.org/",
-                type: "tutorial",
-                isFree: true,
-              },
-              {
-                name: "Django Official Tutorial",
-                url: "https://docs.djangoproject.com/en/stable/intro/tutorial01/",
-                type: "documentation",
-                isFree: true,
-              },
-            ],
-            project: "Build a blog with Django",
-          },
-          {
-            title: "FastAPI & REST APIs",
-            description: "FastAPI, Pydantic, Swagger, async endpoints",
-            resources: [
-              {
-                name: "FastAPI Docs",
-                url: "https://fastapi.tiangolo.com/",
-                type: "documentation",
-                isFree: true,
-              },
-              {
-                name: "FastAPI Tutorial",
-                url: "https://fastapi.tiangolo.com/tutorial/",
-                type: "tutorial",
-                isFree: true,
-              },
-            ],
-            project: "Build a REST API with FastAPI",
-          },
-        ],
-      },
-    ],
-  },
+  // {
+  //   id: "python-backend",
+  //   title: "Python Backend Developer Roadmap",
+  //   keywords: [
+  //     "python",
+  //     "django",
+  //     "flask",
+  //     "fastapi",
+  //     "backend",
+  //     "api",
+  //     "sql",
+  //     "postgresql",
+  //   ],
+  //   difficulty: "intermediate",
+  //   estimatedDays: 75,
+  //   phases: [
+  //     {
+  //       phaseTitle: "Phase 1: Python Fundamentals (2 weeks)",
+  //       duration: "2 weeks",
+  //       topics: [
+  //         {
+  //           title: "Python Basics & OOP",
+  //           description:
+  //             "Data types, functions, classes, inheritance, decorators",
+  //           resources: [
+  //             {
+  //               name: "Python.org Tutorial",
+  //               url: "https://docs.python.org/3/tutorial/",
+  //               type: "documentation",
+  //               isFree: true,
+  //             },
+  //             {
+  //               name: "Corey Schafer Python",
+  //               url: "https://youtube.com/playlist?list=PL-osiE80TeTt2d9bfVyTiXJA-UTHn6WwU",
+  //               type: "video",
+  //               isFree: true,
+  //             },
+  //           ],
+  //           project: "Build a CLI task manager",
+  //         },
+  //         {
+  //           title: "Advanced Python",
+  //           description: "Generators, context managers, async/await",
+  //           resources: [
+  //             {
+  //               name: "Real Python",
+  //               url: "https://realpython.com/",
+  //               type: "tutorial",
+  //               isFree: true,
+  //             },
+  //             {
+  //               name: "Python Type Hints",
+  //               url: "https://mypy.readthedocs.io/",
+  //               type: "documentation",
+  //               isFree: true,
+  //             },
+  //           ],
+  //           project: "Build an async web scraper",
+  //         },
+  //       ],
+  //     },
+  //     {
+  //       phaseTitle: "Phase 2: Web Frameworks (4 weeks)",
+  //       duration: "4 weeks",
+  //       topics: [
+  //         {
+  //           title: "Django Framework",
+  //           description: "MVT architecture, ORM, admin panel, auth",
+  //           resources: [
+  //             {
+  //               name: "Django Girls Tutorial",
+  //               url: "https://tutorial.djangogirls.org/",
+  //               type: "tutorial",
+  //               isFree: true,
+  //             },
+  //             {
+  //               name: "Django Official Tutorial",
+  //               url: "https://docs.djangoproject.com/en/stable/intro/tutorial01/",
+  //               type: "documentation",
+  //               isFree: true,
+  //             },
+  //           ],
+  //           project: "Build a blog with Django",
+  //         },
+  //         {
+  //           title: "FastAPI & REST APIs",
+  //           description: "FastAPI, Pydantic, Swagger, async endpoints",
+  //           resources: [
+  //             {
+  //               name: "FastAPI Docs",
+  //               url: "https://fastapi.tiangolo.com/",
+  //               type: "documentation",
+  //               isFree: true,
+  //             },
+  //             {
+  //               name: "FastAPI Tutorial",
+  //               url: "https://fastapi.tiangolo.com/tutorial/",
+  //               type: "tutorial",
+  //               isFree: true,
+  //             },
+  //           ],
+  //           project: "Build a REST API with FastAPI",
+  //         },
+  //       ],
+  //     },
+  //   ],
+  // },
 
   // =============================================
   // 4. DEVOPS ENGINEER

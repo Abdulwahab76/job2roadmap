@@ -276,7 +276,7 @@ Examples:
             setJobDescription(e.target.value);
             setSelectedStack(""); // Reset selected stack when typing
           }}
-          className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none transition-all bg-white ${
+          className={`w-full px-4 py-3 border-2 rounded-xl text-black focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none transition-all bg-white ${
             validation && !validation.isValid
               ? "border-red-300"
               : validation?.isValid
