@@ -3,27 +3,58 @@ import {
   findMatchingRoadmap,
   extractSkillsFromTemplate,
 } from "@/lib/roadmaps/templates";
-import { extractSkillsFromJob, generateLearningRoadmap } from "@/lib/gemini";
+import { generateRoadmapInOneShot } from "@/lib/gemini"; // 🆕 One-shot function
 import { checkCache, saveToCache } from "@/lib/cacheService";
 import { saveRoadmap } from "@/lib/roadmaps/roadmapService";
 import { validateJobInput } from "@/lib/validator";
 import { canGenerate, incrementUsage } from "@/lib/usageTracker";
+import { getUserAPIKeys } from "@/lib/settingsService";
+import { supabase } from "@/lib/supabase";
 
+// 🎯 Check if user has custom API key
+async function getUserHasKey(userId: string): Promise<boolean> {
+  if (!userId || userId === "anonymous") return false;
+
+  const { data } = await supabase
+    .from("user_api_keys")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("provider", "gemini")
+    .eq("is_active", true)
+    .is("revoked_at", null)
+    .limit(1)
+    .single();
+
+  return !!data;
+}
+// Helper function
+async function checkUserHasKey(userId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from("user_api_keys")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("is_active", true)
+    .single();
+
+  return !!data; // true agar key mili, false agar nahi
+}
 export async function POST(request: Request) {
   try {
     const { jobDescription, mode = "auto", userId } = await request.json();
     const isAuthenticated = userId && userId !== "anonymous";
-
+    const userHasKey = await checkUserHasKey(userId);
+    if (userHasKey) {
+      console.log("✅ User has API key!");
+    }
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log("🔍 NEW REQUEST");
     console.log("📝 Input:", jobDescription?.substring(0, 80) + "...");
     console.log("👤 User:", userId || "anonymous");
     console.log("🎮 Mode:", mode);
 
-    // 🎯 Validate but don't reject - sirf warnings do
+    // Validate
     const validation = validateJobInput(jobDescription);
 
-    // 🎯 FIX: Sirf length check mein reject karo
     if (jobDescription.trim().length < 20) {
       return NextResponse.json(
         {
@@ -35,106 +66,126 @@ export async function POST(request: Request) {
       );
     }
 
-    // Warnings log karo but allow karo
-    if (validation.warnings.length > 0) {
-      console.log("⚠️ Warnings:", validation.warnings);
+    // 🆕 Check if user has custom API key
+    const userHasCustomKey = await getUserHasKey(userId);
+    if (userHasCustomKey) {
+      console.log("🔑 User has custom API key - will use AI generation");
     }
 
     let skills: any = null;
     let roadmap: any = null;
     let source: string = "ai";
+    let keySource: string = "none";
 
-    // 🎯 LAYER 1: LOCAL TEMPLATE (0 tokens)
+    // ────────────────────────────────────────
+    // 🎯 LAYER 1: LOCAL TEMPLATE
+    // ────────────────────────────────────────
     if (mode === "auto" || mode === "local-only") {
-      console.log("🔍 LAYER 1: Checking local templates...");
-      const localTemplate = findMatchingRoadmap(jobDescription);
-
-      if (localTemplate) {
-        console.log("✅ LOCAL MATCH:", localTemplate.title);
-        skills = extractSkillsFromTemplate(localTemplate);
-        roadmap = {
-          title: localTemplate.title,
-          difficulty: localTemplate.difficulty,
-          estimatedDays: localTemplate.estimatedDays,
-          phases: localTemplate.phases,
-        };
-        source = "local";
+      if (userHasCustomKey && mode === "auto") {
+        console.log("⏭️ Skipping local templates (user has custom API key)");
       } else {
-        console.log("❌ No local template matched");
+        console.log("🔍 LAYER 1: Checking local templates...");
+        const localTemplate = findMatchingRoadmap(jobDescription);
+
+        if (localTemplate) {
+          console.log("✅ LOCAL MATCH:", localTemplate.title);
+          skills = extractSkillsFromTemplate(localTemplate);
+          roadmap = {
+            title: localTemplate.title,
+            difficulty: localTemplate.difficulty,
+            estimatedDays: localTemplate.estimatedDays,
+            phases: localTemplate.phases,
+          };
+          source = "local";
+          keySource = "none";
+        }
       }
     }
 
-    // 🎯 LAYER 2: CACHE CHECK (0 tokens)
+    // ────────────────────────────────────────
+    // 🎯 LAYER 2: CACHE CHECK
+    // ────────────────────────────────────────
     if (!roadmap && mode !== "ai-only") {
-      console.log("🔍 LAYER 2: Checking cache...");
-      const cached = await checkCache(jobDescription);
-
-      if (cached) {
-        console.log("✅ CACHE HIT!");
-        skills = cached.skills;
-        roadmap = cached.roadmap;
-        source = "cache";
+      if (userHasCustomKey && mode === "auto") {
+        console.log("⏭️ Skipping cache (user has custom API key)");
       } else {
-        console.log("❌ No cache match");
+        console.log("🔍 LAYER 2: Checking cache...");
+        const cached = await checkCache(jobDescription);
+        if (cached) {
+          console.log("✅ CACHE HIT!");
+          skills = cached.skills;
+          roadmap = cached.roadmap;
+          source = "cache";
+          keySource = "none";
+        }
       }
     }
 
-    // 🎯 LAYER 3: AI GENERATION (Smart handling)
+    // ────────────────────────────────────────
+    // 🎯 LAYER 3: AI GENERATION (ONLY ONCE!)
+    // ────────────────────────────────────────
     if (!roadmap && (mode === "auto" || mode === "ai-only")) {
-      console.log("🤖 LAYER 3: AI generation needed");
+      console.log("🤖 LAYER 3: AI generation...");
 
-      // Check usage limits
-      const usageCheck = canGenerate(isAuthenticated);
-      if (!usageCheck.canGenerate) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: usageCheck.message,
-            usageLimitReached: true,
-          },
-          { status: 429 }
-        );
-      }
-
-      // 🎯 Smart generation with fallback
       try {
-        console.log("📡 Calling Gemini API...");
-        skills = await extractSkillsFromJob(jobDescription);
-        roadmap = await generateLearningRoadmap(skills);
-        source = "ai";
+        // 🎯 ONE CALL only!
+        const result = await generateRoadmapInOneShot(jobDescription, userId);
 
-        // Track usage
-        incrementUsage(isAuthenticated);
+        skills = result.skills;
+        roadmap = result.roadmap;
+        source = "ai";
+        keySource = result.keySource;
+
+        console.log(`🔑 Key used: ${keySource.toUpperCase()}`);
+        console.log(
+          `💰 ${
+            keySource === "user"
+              ? "User's tokens (FREE for app!)"
+              : "App tokens used"
+          }`
+        );
+
+        // Only count usage if app key was used
+        if (keySource === "app") {
+          const usageCheck = canGenerate(isAuthenticated);
+          if (!usageCheck.canGenerate) {
+            return NextResponse.json(
+              {
+                success: false,
+                error: usageCheck.message,
+                usageLimitReached: true,
+              },
+              { status: 429 }
+            );
+          }
+          incrementUsage(isAuthenticated);
+        }
 
         // Save to cache
-        await saveToCache(jobDescription, skills, roadmap, "ai");
-        console.log("✅ Cached for future");
+        try {
+          await saveToCache(jobDescription, skills, roadmap, "ai");
+          console.log("✅ Cached for future");
+        } catch (cacheError) {
+          console.error("❌ Cache save error:", cacheError);
+        }
       } catch (aiError: any) {
         console.error("❌ AI failed:", aiError.message);
         console.log("⚠️ Using fallback roadmap");
 
-        // 🎯 FALLBACK: Return basic roadmap if AI fails
         skills = {
           jobTitle: "Software Developer",
           requiredSkills: ["HTML", "CSS", "JavaScript", "Git"],
           experienceLevel: "beginner",
         };
         roadmap = generateFallbackRoadmap();
-        source = "ai";
+        source = "local";
+        keySource = "none";
       }
     }
 
-    if (!roadmap) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Unable to generate roadmap. Please try again.",
-        },
-        { status: 500 }
-      );
-    }
-
-    // Save to user account
+    // ────────────────────────────────────────
+    // 🎯 Save to user account
+    // ────────────────────────────────────────
     let savedId = null;
     if (isAuthenticated && userId) {
       try {
@@ -153,16 +204,22 @@ export async function POST(request: Request) {
       }
     }
 
-    console.log("📊 RESULT:", { source, phases: roadmap.phases?.length });
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("📊 RESULT:", {
+      source,
+      keySource,
+      phases: roadmap?.phases?.length,
+    });
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     return NextResponse.json({
       success: true,
       source,
+      keySource,
       skills,
       roadmap,
       savedId,
-      validation, // Warnings bhi bhejo
+      validation,
     });
   } catch (error: any) {
     console.error("❌ FATAL ERROR:", error.message);
@@ -173,7 +230,7 @@ export async function POST(request: Request) {
   }
 }
 
-// 🎯 Fallback roadmap generator
+// 🎯 Fallback roadmap
 function generateFallbackRoadmap(): any {
   return {
     title: "Software Developer Learning Roadmap",
@@ -203,115 +260,12 @@ function generateFallbackRoadmap(): any {
             ],
             project: "Build a personal portfolio website",
           },
-          {
-            title: "Version Control with Git & GitHub",
-            description: "Learn essential version control for collaboration",
-            resources: [
-              {
-                name: "GitHub Skills",
-                url: "https://skills.github.com/",
-                type: "interactive",
-                isFree: true,
-              },
-              {
-                name: "Git Handbook",
-                url: "https://guides.github.com/introduction/git-handbook/",
-                type: "documentation",
-                isFree: true,
-              },
-            ],
-            project: "Push your projects to GitHub",
-          },
-        ],
-      },
-      {
-        phaseTitle: "Phase 2: Frontend Development (4 weeks)",
-        duration: "4 weeks",
-        topics: [
-          {
-            title: "React.js Fundamentals",
-            description: "Learn the most popular frontend framework",
-            resources: [
-              {
-                name: "React Official Docs",
-                url: "https://react.dev/learn",
-                type: "documentation",
-                isFree: true,
-              },
-              {
-                name: "Scrimba React Course",
-                url: "https://scrimba.com/learn/learnreact",
-                type: "course",
-                isFree: true,
-              },
-            ],
-            project: "Build a task management application",
-          },
-          {
-            title: "CSS Frameworks & Responsive Design",
-            description: "Create beautiful, mobile-friendly interfaces",
-            resources: [
-              {
-                name: "TailwindCSS Docs",
-                url: "https://tailwindcss.com/docs",
-                type: "documentation",
-                isFree: true,
-              },
-              {
-                name: "CSS Grid Garden",
-                url: "https://cssgridgarden.com/",
-                type: "interactive",
-                isFree: true,
-              },
-            ],
-            project: "Style your app with TailwindCSS",
-          },
-        ],
-      },
-      {
-        phaseTitle: "Phase 3: Backend & APIs (4 weeks)",
-        duration: "4 weeks",
-        topics: [
-          {
-            title: "Node.js & REST APIs",
-            description: "Build server-side applications and APIs",
-            resources: [
-              {
-                name: "Node.js Docs",
-                url: "https://nodejs.org/en/docs/",
-                type: "documentation",
-                isFree: true,
-              },
-              {
-                name: "Express.js Guide",
-                url: "https://expressjs.com/en/guide/routing.html",
-                type: "documentation",
-                isFree: true,
-              },
-            ],
-            project: "Create a REST API for your app",
-          },
-          {
-            title: "Database Fundamentals",
-            description: "Learn SQL and database design principles",
-            resources: [
-              {
-                name: "SQL Tutorial",
-                url: "https://www.sqltutorial.org/",
-                type: "tutorial",
-                isFree: true,
-              },
-              {
-                name: "PostgreSQL Docs",
-                url: "https://www.postgresql.org/docs/",
-                type: "documentation",
-                isFree: true,
-              },
-            ],
-            project: "Connect database to your API",
-          },
         ],
       },
     ],
   };
 }
+
+// ────────────────────────────────────────
+// 🎯 Fallback roadmap generator
+// ────────────────────────────────────────
