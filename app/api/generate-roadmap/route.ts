@@ -124,62 +124,36 @@ export async function POST(request: Request) {
     // ────────────────────────────────────────
     // 🎯 LAYER 3: AI GENERATION (ONLY ONCE!)
     // ────────────────────────────────────────
+    // app/api/generate-roadmap/route.ts (LAYER 3 part)
     if (!roadmap && (mode === "auto" || mode === "ai-only")) {
       console.log("🤖 LAYER 3: AI generation...");
 
-      try {
-        // 🎯 ONE CALL only!
-        const result = await generateRoadmapInOneShot(jobDescription, userId);
+      const result = await generateRoadmapInOneShot(jobDescription, userId);
 
+      if (result.success && result.roadmap) {
+        // ✅ Success
         skills = result.skills;
         roadmap = result.roadmap;
         source = "ai";
         keySource = result.keySource;
 
-        console.log(`🔑 Key used: ${keySource.toUpperCase()}`);
-        console.log(
-          `💰 ${
-            keySource === "user"
-              ? "User's tokens (FREE for app!)"
-              : "App tokens used"
-          }`
-        );
-
-        // Only count usage if app key was used
-        if (keySource === "app") {
-          const usageCheck = canGenerate(isAuthenticated);
-          if (!usageCheck.canGenerate) {
-            return NextResponse.json(
-              {
-                success: false,
-                error: usageCheck.message,
-                usageLimitReached: true,
-              },
-              { status: 429 }
-            );
-          }
-          incrementUsage(isAuthenticated);
-        }
-
-        // Save to cache
+        if (keySource === "app") incrementUsage(isAuthenticated);
         try {
           await saveToCache(jobDescription, skills, roadmap, "ai");
-          console.log("✅ Cached for future");
-        } catch (cacheError) {
-          console.error("❌ Cache save error:", cacheError);
-        }
-      } catch (aiError: any) {
-        console.error("❌ AI failed:", aiError.message);
-        console.log("⚠️ Using fallback roadmap");
+        } catch {}
+      } else {
+        // ❌ AI Failed - Return ERROR to frontend
+        console.log("❌ AI failed:", result.error);
 
-        skills = {
-          jobTitle: "Software Developer",
-          requiredSkills: ["HTML", "CSS", "JavaScript", "Git"],
-          experienceLevel: "beginner",
-        };
-        roadmap = generateFallbackRoadmap();
-        source = "local";
-        keySource = "none";
+        return NextResponse.json(
+          {
+            success: false,
+            error: result.error,
+            errorType: result.errorType, // "user_quota" | "user_key_invalid" | "app_quota" | "no_key"
+            keySource: result.keySource,
+          },
+          { status: result.errorType?.includes("quota") ? 429 : 400 }
+        );
       }
     }
 

@@ -27,6 +27,7 @@ import {
 import { analyzeInput, validateJobInput } from "@/lib/validator";
 import { useRouter } from "next/navigation";
 import { ALL_STACKS } from "@/lib/stackData";
+import ErrorDisplay, { ErrorData } from "./ErrorDisplay";
 
 type GenerationMode = "auto" | "local-only" | "ai-only";
 
@@ -40,8 +41,6 @@ export default function JobInput() {
     loading,
     setSkills,
     setRoadmap,
-    setError,
-    error,
   } = useRoadmapStore();
 
   const [mode, setMode] = useState<GenerationMode>("auto");
@@ -49,6 +48,7 @@ export default function JobInput() {
   const [liveAnalysis, setLiveAnalysis] = useState<any>(null);
   const [usageCheck, setUsageCheck] = useState(canGenerate(!!user));
   const [selectedStack, setSelectedStack] = useState<string>("");
+  const [error, setError] = useState<ErrorData | null>(null);
 
   useEffect(() => {
     setUsageCheck(canGenerate(!!user));
@@ -107,16 +107,6 @@ export default function JobInput() {
 
   const handleGenerate = async () => {
     const check = canGenerate(!!user);
-    if (!check.canGenerate) {
-      setError(check.message);
-      return;
-    }
-
-    const finalValidation = validateJobInput(jobDescription);
-    if (!finalValidation.isValid) {
-      setError(finalValidation.errors.join(" "));
-      return;
-    }
 
     setLoading(true);
     setError(null);
@@ -134,24 +124,195 @@ export default function JobInput() {
 
       const data = await response.json();
 
-      if (data.success) {
-        incrementUsage(!!user);
-        setUsageCheck(canGenerate(!!user));
-        setSkills(data.skills);
-        setRoadmap(data.roadmap, data.source);
-
-        if (data.savedId) {
-          router.push(`/roadmap/${data.savedId}`);
+      // 🎯 ERROR HANDLING
+      if (!data.success) {
+        // Custom error messages based on error type
+        if (data.error?.includes("quota") || data.error?.includes("exceeded")) {
+          setError({
+            type: "quota",
+            title: "API Quota Exceeded ⚠️",
+            message: "Daily limit reached. You can:",
+            actions: [
+              {
+                label: "Add Your API Key",
+                href: "/dashboard/settings",
+                icon: "🔑",
+              },
+              {
+                label: "Try Local Templates",
+                action: () => setMode("local-only"),
+                icon: "📚",
+              },
+              { label: "Try Again Tomorrow", action: () => {}, icon: "⏰" },
+            ],
+          });
+        } else if (
+          data.error?.includes("API key") ||
+          data.error?.includes("Invalid")
+        ) {
+          setError({
+            type: "key",
+            title: "Invalid API Key 🔑",
+            message: "Your API key is invalid or expired.",
+            actions: [
+              {
+                label: "Update API Key",
+                href: "/dashboard/settings",
+                icon: "⚙️",
+              },
+              {
+                label: "Use App Key (if available)",
+                action: () => setMode("auto"),
+                icon: "🔄",
+              },
+            ],
+          });
+        } else if (
+          data.error?.includes("timeout") ||
+          data.error?.includes("timed out")
+        ) {
+          setError({
+            type: "timeout",
+            title: "Request Timeout ⏰",
+            message: "The AI took too long to respond. Please try again.",
+            actions: [
+              { label: "Try Again", action: handleGenerate, icon: "🔄" },
+              {
+                label: "Use Local Templates",
+                action: () => setMode("local-only"),
+                icon: "📚",
+              },
+            ],
+          });
+        } else if (data.noLocalMatch) {
+          setError({
+            type: "no_match",
+            title: "No Template Found 📚",
+            message:
+              "No local template matches. Try different keywords or AI mode.",
+            actions: [
+              {
+                label: "Try AI Mode",
+                action: () => setMode("ai-only"),
+                icon: "🤖",
+              },
+              { label: "Use Different Keywords", action: () => {}, icon: "✏️" },
+            ],
+          });
         } else {
-          setError(
-            "Roadmap generated but couldn't be saved. Please try again."
-          );
+          setError({
+            type: "general",
+            title: "Generation Failed ❌",
+            message: data.error || "Something went wrong. Please try again.",
+            actions: [
+              { label: "Try Again", action: handleGenerate, icon: "🔄" },
+            ],
+          });
         }
-      } else {
-        setError(data.error || "Something went wrong");
+        return;
+      }
+      if (data.errorType === "user_quota") {
+        setError({
+          type: "user_quota",
+          title: "⚡ Your API Key Quota Exceeded",
+          message: "Your personal API key has reached its daily limit.",
+          actions: [
+            {
+              label: "🗑️ Remove Your API Key (Use App Key)",
+              action: async () => {
+                // Revoke user's key
+                await fetch("/api/revoke-my-key", {
+                  method: "POST",
+                  body: JSON.stringify({ userId: user?.uid }),
+                });
+                // Retry with app key
+                setMode("auto");
+                handleGenerate();
+              },
+              icon: "🗑️",
+            },
+            {
+              label: "📚 Use Local Templates",
+              action: () => setMode("local-only"),
+              icon: "📚",
+            },
+            {
+              label: "🔑 Add New API Key",
+              href: "/dashboard/settings",
+              icon: "🔑",
+            },
+          ],
+        });
+        return;
+      }
+      // 🎯 USER API KEY INVALID
+      if (data.errorType === "user_key_invalid") {
+        setError({
+          type: "user_key_invalid",
+          title: "🔑 Your API Key is Invalid",
+          message:
+            "Your saved API key is invalid or expired. Remove it or update with a new one.",
+          actions: [
+            {
+              label: "🗑️ Remove Key (Use App)",
+              action: async () => {
+                await fetch("/api/revoke-my-key", {
+                  method: "POST",
+                  body: JSON.stringify({ userId: user?.uid }),
+                });
+                setMode("auto");
+                handleGenerate();
+              },
+              icon: "🗑️",
+            },
+            {
+              label: "⚙️ Update API Key",
+              href: "/dashboard/settings",
+              icon: "⚙️",
+            },
+          ],
+        });
+        return;
+      }
+
+      // 🎯 APP QUOTA EXCEEDED
+      if (data.errorType === "app_quota") {
+        setError({
+          type: "app_quota",
+          title: "⚡ App API Quota Exceeded",
+          message:
+            "The app's daily limit is reached. Add your own API key to continue.",
+          actions: [
+            {
+              label: "🔑 Add Your API Key",
+              href: "/dashboard/settings",
+              icon: "🔑",
+            },
+            {
+              label: "📚 Use Local Templates",
+              action: () => setMode("local-only"),
+              icon: "📚",
+            },
+          ],
+        });
+        return;
+      }
+      // ✅ Success
+      incrementUsage(!!user);
+      setUsageCheck(canGenerate(!!user));
+      setSkills(data.skills);
+      setRoadmap(data.roadmap, data.source);
+
+      if (data.savedId) {
+        router.push(`/roadmap/${data.savedId}`);
       }
     } catch (error) {
-      setError("Network error. Please try again.");
+      setError({
+        type: "network",
+        title: "Network Error 🌐",
+        message: "Check your internet connection and try again.",
+        actions: [{ label: "Try Again", action: handleGenerate, icon: "🔄" }],
+      });
     } finally {
       setLoading(false);
     }
@@ -169,7 +330,14 @@ export default function JobInput() {
   };
 
   const remaining = getRemainingGenerations(!!user);
+  {
+    /* Error Display - JobInput mein textarea ke neeche */
+  }
+  console.log(error?.message, "erorr");
 
+  {
+    error && <ErrorDisplay error={error} onDismiss={() => setError(null)} />;
+  }
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -336,7 +504,7 @@ Examples:
             <AlertCircle className="w-5 h-5 text-red-500 mt-0.5" />
             <div className="flex-1">
               <p className="text-red-700 font-medium">Cannot Generate</p>
-              <p className="text-red-600 text-sm">{error}</p>
+              <ErrorDisplay error={error} onDismiss={() => setError(null)} />
             </div>
             <button onClick={() => setError(null)}>
               <X className="w-4 h-4 text-red-400" />
