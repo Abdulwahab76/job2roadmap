@@ -29,10 +29,14 @@ import {
   Plus,
   X,
   RefreshCw,
+  Eye,
+  EyeClosed,
   // Github,
   // Linkedin,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+import { encrypt } from "@/lib/encryption";
 
 type TabType =
   | "profile"
@@ -53,8 +57,9 @@ export default function SettingsPage() {
     text: string;
   } | null>(null);
   const [apiKeys, setApiKeys] = useState<any[]>([]);
+  const [newApiKey, setNewApiKey] = useState("");
   const [newKeyName, setNewKeyName] = useState("");
-  const [showNewKey, setShowNewKey] = useState<string | null>(null);
+  const [showNewKey, setShowNewKey] = useState<boolean | null>(null);
 
   // Form states
   const [profileForm, setProfileForm] = useState({
@@ -191,15 +196,54 @@ export default function SettingsPage() {
   };
 
   const handleCreateAPIKey = async () => {
-    if (!user || !newKeyName.trim()) return;
+    if (!user || !newKeyName.trim() || newApiKey.trim() === "") {
+      alert("Please fill all fields");
+      return;
+    }
+    setSaving(true);
     try {
-      const newKey = await createAPIKey(user.uid, newKeyName.trim());
-      setShowNewKey(newKey.api_key);
+      // 🎯 Encrypt before saving
+      const encrypted = encrypt(newApiKey.trim());
+
+      console.log("🔐 Encryption test:");
+      console.log("  Encrypted:", encrypted.substring(0, 30) + "...");
+
+      // 🎯 Save to Supabase
+      const { data, error } = await supabase
+        .from("user_api_keys")
+        .insert({
+          user_id: user.uid,
+          name: newKeyName.trim(),
+          api_key: newApiKey, // ← Encrypted value yahan bhi dalo
+          api_key_encrypted: encrypted, // ← Aur yahan bhi          provider: "gemini",
+          is_active: true,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      console.log("✅ Key saved successfully!");
+      console.log("  DB Record:", {
+        id: data.id,
+        name: data.name,
+        encrypted_length: data.api_key_encrypted,
+        is_active: data.is_active,
+      });
+
+      // Clear form
       setNewKeyName("");
+      setNewApiKey("");
+
+      // Reload keys list
       await loadAPIKeys();
-      showMessage("success", "API key created! Copy it now.");
+
+      alert("API Key added successfully!");
     } catch (error: any) {
-      showMessage("error", "Failed to create API key");
+      console.error("❌ Save failed:", error);
+      alert("Failed to save API key: " + error.message);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -213,7 +257,6 @@ export default function SettingsPage() {
       showMessage("error", "Failed to revoke API key");
     }
   };
-
   const handleDeleteAccount = async () => {
     if (!user) return;
     if (
@@ -254,6 +297,10 @@ export default function SettingsPage() {
   const showMessage = (type: "success" | "error", text: string) => {
     setMessage({ type, text });
     setTimeout(() => setMessage(null), 5000);
+  };
+  const handleEncryptUi = (apiKey: string) => {
+    const encryptedKey = apiKey.replace(/.(?=.{4})/g, "*");
+    return <p className="font-medium text-black">{encryptedKey}</p>;
   };
 
   if (loading) {
@@ -611,7 +658,14 @@ export default function SettingsPage() {
                     value={newKeyName}
                     onChange={(e) => setNewKeyName(e.target.value)}
                     placeholder="Key name..."
-                    className="w-full pl-10 pr-4 py-2 border text-black border-gray-300 rounded-lg focus:outline-none"
+                    className="  w-6/12 pl-10 pr-4 py-2 border text-black border-gray-300 rounded-lg focus:outline-none"
+                  />
+                  <input
+                    type="text"
+                    value={newApiKey}
+                    onChange={(e) => setNewApiKey(e.target.value)}
+                    placeholder="Api value..."
+                    className=" w-6/12 pl-10 pr-4 py-2 border text-black border-gray-300 rounded-lg focus:outline-none"
                   />
                   <button
                     onClick={handleCreateAPIKey}
@@ -634,16 +688,34 @@ export default function SettingsPage() {
                     >
                       <div>
                         <p className="font-medium text-black">{key.name}</p>
+                        {showNewKey ? (
+                          <div className="w-30 text-wrap">
+                            <p className="font-medium text-black text-wrap">
+                              {key.api_key.substring(0, 30)}
+                            </p>
+                          </div>
+                        ) : (
+                          handleEncryptUi(key.api_key.substring(0, 30))
+                        )}
+
                         <p className="text-sm text-black">
                           {new Date(key.created_at).toLocaleDateString()}
                         </p>
                       </div>
-                      <button
-                        onClick={() => handleRevokeKey(key.id)}
-                        className="text-black font-medium cursor-pointer text-sm bg-white rounded-md p-2 shadow"
-                      >
-                        Revoke
-                      </button>
+                      <div className="flex items-center gap-x-5">
+                        <button
+                          onClick={() => setShowNewKey((prev) => !prev)}
+                          className="text-black font-medium cursor-pointer text-sm bg-white rounded-md p-2 shadow"
+                        >
+                          {showNewKey ? <Eye /> : <EyeClosed />}
+                        </button>
+                        <button
+                          onClick={() => handleRevokeKey(key.id)}
+                          className="text-black font-medium cursor-pointer text-sm bg-white rounded-md p-2 shadow"
+                        >
+                          Revoke
+                        </button>
+                      </div>
                     </div>
                   ))
                 )}
